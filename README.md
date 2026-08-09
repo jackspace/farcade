@@ -18,10 +18,16 @@ knows none of them.
 
 - **Spec**: [docs/spec.md](docs/spec.md)
 - **Sprint 1 plan and work breakdown**: [docs/sprint-1.md](docs/sprint-1.md)
+- **Deploying two peers over Reticulum/prnsd**: [docs/deploy-two-peers.md](docs/deploy-two-peers.md)
+- **Why prnsd owns port 37428, with evidence**: [docs/topology-prnsd.md](docs/topology-prnsd.md)
 
 ## Status
 
-Sprint 1 in progress (2026-08-08). Nothing here is stable yet.
+Sprint 1 nearly complete (2026-08-09): P0–P6 landed — two game plugins, adversarial channel
+harness (1000 lossy games, zero desyncs), LXMF transport over prnsd proven cross-host
+(the Windows host ↔ Pi, engine chess to checkmate with identical hashes both sides), instrumentation
+CSV + metrics + paced soak runner. A 24 h the Windows host ↔ Pi soak (P6.4) is running. Interfaces are
+not stable yet.
 
 ## Quick start (will firm up as sprint 1 lands)
 
