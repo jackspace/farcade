@@ -65,6 +65,16 @@ class ConnectFour:
             raise MoveDecodeError(f"bad c4 move: {data.hex()}")
         return data[0]
 
+    def parse_move(self, state: C4State, text: str) -> int:
+        """Human input: a column number 0-6."""
+        try:
+            col = int(text.strip())
+        except ValueError as e:
+            raise ValueError(f"not a column: {text!r}") from e
+        if col not in self.legal_moves(state):
+            raise ValueError(f"column {col} is not playable")
+        return col
+
     def render_ascii(self, state: C4State) -> str:
         rows = []
         for r in range(ROWS - 1, -1, -1):

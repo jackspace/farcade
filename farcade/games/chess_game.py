@@ -88,6 +88,23 @@ class ChessGame:
             promotion=_CODE_PROMO[promo_code],
         )
 
+    # -- human input (UI concern, not part of the core port) -----------------
+
+    def parse_move(self, state: ChessState, text: str) -> chess.Move:
+        """Accept UCI ('e2e4') or SAN ('Nf3'), sloppily cased."""
+        b = state.board()
+        text = text.strip()
+        try:
+            move = chess.Move.from_uci(text.lower())
+            if move in b.legal_moves:
+                return move
+        except ValueError:
+            pass
+        try:
+            return b.parse_san(text)
+        except ValueError as e:
+            raise ValueError(f"not a legal move here: {text!r}") from e
+
     # -- rendering -----------------------------------------------------------
 
     def render_ascii(self, state: ChessState) -> str:
