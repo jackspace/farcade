@@ -124,12 +124,19 @@ class LxmfTransport:
         return n
 
     def wait_for_peer(self, peer: str, timeout: float) -> bool:
-        """Block until the peer's identity is recallable (it announced)."""
+        """Block until the peer's identity is recallable. Requests a path
+        every few seconds rather than waiting passively: the peer's last
+        announce may predate our link existing, and a path response
+        carries the identity just as well."""
         dest_hash = bytes.fromhex(peer)
         deadline = time.time() + timeout
+        last_request = 0.0
         while time.time() < deadline:
             if RNS.Identity.recall(dest_hash) is not None:
                 return True
+            if time.time() - last_request > 5.0:
+                RNS.Transport.request_path(dest_hash)
+                last_request = time.time()
             time.sleep(0.25)
         return False
 
