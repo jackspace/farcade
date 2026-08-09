@@ -88,10 +88,23 @@ interface gets enabled *on the prnsd side*, never on the peers.
 
 ## Known warts
 
-- Python RNS logs `Shared instance RPC failed ... digest sent was rejected` when attached to
-  prnsd 0.3.3 (rns 1.4.2 tries to report destination stats over the control port and prnsd
-  rejects the digest). Cosmetic for us: announces, path resolution and LXMF delivery all
-  work, proven by the artifacts above. Worth watching across upstream versions.
+- **`digest sent was rejected` — root-caused and fixed 2026-08-09.** Python RNS
+  authenticates shared-instance RPC with `full_hash(transport identity private key)`
+  (`Reticulum.py` ~line 356), which assumes every process shares one configdir. prnsd's key
+  is the same construction over ITS identity: `sha256` of the raw bytes of
+  `<prnsd-config>/storage/transport_identity` (see
+  `prns-interfaces/.../rns_rpc/tests/persistence.rs`). A client with its own configdir can
+  never match by derivation — but both sides honour an explicit key, so compute
+  `sha256(transport_identity bytes)` and set it in each peer's RNS config:
+
+      [reticulum]
+        rpc_key = <64 hex chars>
+
+  Verified live: a paced exchange without the key logged dozens of digest errors; the same
+  exchange with it logged **zero**, and link-stats/first-hop-timeout RPCs work. Latency was
+  unchanged (median 4.01 s both arms), so the errors were cosmetic — but 24 h of clean logs
+  and working stats beat 24 h of noise. Note this is interesting for *any* RNS app with its
+  own configdir attaching to prnsd (Sideband on a desktop, say): same mismatch, same fix.
 - On Windows prnsd logs `shared_instance_unix_fallback fallback="tcp"` — expected; there is
   no unix socket on Windows, TCP 37428 is the intended shape (same as Python RNS).
 - `GamePeer` assumes its storage directory exists (test fixtures create it). The runner
