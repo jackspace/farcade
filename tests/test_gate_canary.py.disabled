@@ -1,0 +1,6 @@
+# The gate canary. Rename to test_gate_canary.py to prove the gate goes red.
+# It must NEVER be committed enabled.
+
+
+def test_gate_canary_fails_on_purpose():
+    raise AssertionError("gate canary: if you can read this in CI, the gate works")

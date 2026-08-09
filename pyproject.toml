@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "farcade"
+version = "0.0.1"
+description = "An arcade at a distance: turn-based games over low-bandwidth links"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "rns>=0.9",
+    "lxmf>=0.6",
+    "chess>=1.10",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "hypothesis>=6",
+    "ruff>=0.6",
+]
+tui = [
+    "textual>=0.80",
+]
+
+[project.scripts]
+farcade = "farcade.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["farcade*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
