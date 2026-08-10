@@ -34,6 +34,12 @@ def cmd_demo(args) -> int:
             print("bot: stockfish")
         else:
             print("bot: stockfish not found on PATH, using random")
+    elif args.engine != "random" and args.game != "chess":
+        # minimax is the default worth-playing opponent for c4/reversi.
+        from farcade.players.minimax import MinimaxPlayer
+
+        bot_player = MinimaxPlayer(depth=3)
+        print("bot: minimax")
     if bot_player is None:
         bot_player = RandomPlayer(seed=None)
         if args.engine != "random":
@@ -99,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
     d = sub.add_parser("demo", help="play a bot locally in your browser")
     d.add_argument("--game", choices=["chess", "c4", "reversi"], default="chess")
     d.add_argument("--port", type=int, default=8765)
-    d.add_argument("--engine", choices=["stockfish", "random"], default="stockfish")
+    d.add_argument("--engine", choices=["stockfish", "minimax", "random"], default="stockfish")
     d.add_argument("--think", type=float, default=0.2)
     d.set_defaults(fn=cmd_demo)
 

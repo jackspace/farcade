@@ -22,6 +22,7 @@ Design notes that matter:
 from __future__ import annotations
 
 import json
+import os
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -407,7 +408,9 @@ class GamePeer:
             "trust": self.transport.trust_level.value,
         }
         path = self.storage / f"{entry.gid}.meta.json"
-        path.write_text(json.dumps(meta, indent=1), encoding="utf-8")
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(meta, indent=1), encoding="utf-8")
+        os.replace(tmp, path)  # atomic: a crash leaves old or new, never torn
 
     def resume_all(self) -> int:
         """Load every persisted game from storage. Returns how many."""
