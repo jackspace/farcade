@@ -81,6 +81,16 @@ Pass-move note: the `Game` port stays unchanged — pass is just a move Reversi 
 | 9b.2 | English + Spanish (es-419) catalogs first; language picked per peer/UI setting | Both languages complete for all games; missing-translation falls back to English visibly, never crashes | sonnet | M |
 | 9b.3 | Surfaces: "rules"/"reglas" command in companion mode; help link/pane in the web UI and TUI | Companion replies with the rules in the asker's language; web help renders without leaving the game | sonnet | M |
 
+### P9c — quality of life, greenlit 2026-08-10 (all five, Jack)
+
+| ID | task | acceptance / QA | model | size |
+|---|---|---|---|---|
+| 9c.1 | **A bot worth playing**: depth-limited minimax with simple evaluations for reversi and c4 (chess already has Stockfish) | Beats RandomPlayer ≥90% over 100 games per game type; never illegal-moves; demo `--engine minimax` | sonnet | M |
+| 9c.2 | **Atomic persistence**: every log/meta write goes temp-then-rename | Kill-mid-write test leaves either old or new file, never a torn one | sonnet | S |
+| 9c.3 | **Names**: self-chosen display name in INVITE/lobby cards (advisory, spoofable, default = hash prefix) + LOCAL petnames that override claims and never leave the node | UI shows petname when set, `claims: X (hash…)` when not; petname file stays local; test proves a claimed name never overwrites a petname | sonnet | M |
+| 9c.4 | **"Your move" awareness**: web title-bar badge; companion mode gets it free (the LXMF message IS the ping) | Title flips to "● your move — Farcade" when any game awaits you | haiku | S |
+| 9c.5 | **Protocol spec + golden vectors**: language-independent fixtures (messages, logs, expected hashes) any implementation must reproduce — the bridge to a future Rust/no_std kernel and the twin-implementation conformance story | Python suite passes the vectors; a deliberately wrong vector fails loudly | **opus** | M |
+
 ### P12 — review and the public gate (carried P7.1/P7.3)
 
 | ID | task | acceptance / QA | model | size |
