@@ -9,6 +9,16 @@ so a running game continuously measures delivery latency, duplication, reorderin
 whatever link carries it. Farcade is a correspondence game platform and an unattended
 network soak harness wearing each other's clothes.
 
+## What it looks like
+
+Chess in the browser — a real stalemate found at ply 83, chat and all:
+
+![Chess to stalemate in the Farcade web UI](docs/screenshots/chess-stalemate-ply83-jack-2026-08-10.png)
+
+Reversi mid-game — legal squares highlighted, forced-pass aware, live disc count:
+
+![Reversi in the Farcade web UI](docs/screenshots/reversi-demo-2026-08-10.png)
+
 ## Design in one breath
 
 State is a pure function of an append-only move log. The ply number is the sequence number.

@@ -73,6 +73,14 @@ Pass-move note: the `Game` port stays unchanged — pass is just a move Reversi 
 | 11.2 | Soak monitor checks completion artifact BEFORE process liveness | The "SOAK DEAD at the finish line" race cannot recur | haiku | S |
 | 11.3 | Multi-session soak made deliberate: `--sessions N` on the initiator | N=2 for 1h, both clean — the accidental result reproduced on purpose | sonnet | M |
 
+### P9b — rules and help, in the player's language (Jack, 2026-08-10)
+
+| ID | task | acceptance / QA | model | size |
+|---|---|---|---|---|
+| 9b.1 | Per-game rules text in clear language: a `rules()` string on each Game plugin, structured for translation (message catalog, not hardcoded prose) | Every registered game has rules; test enforces it so a new game cannot ship ruleless | sonnet | M |
+| 9b.2 | English + Spanish (es-419) catalogs first; language picked per peer/UI setting | Both languages complete for all games; missing-translation falls back to English visibly, never crashes | sonnet | M |
+| 9b.3 | Surfaces: "rules"/"reglas" command in companion mode; help link/pane in the web UI and TUI | Companion replies with the rules in the asker's language; web help renders without leaving the game | sonnet | M |
+
 ### P12 — review and the public gate (carried P7.1/P7.3)
 
 | ID | task | acceptance / QA | model | size |
