@@ -49,6 +49,11 @@ def main() -> int:
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "games").mkdir(exist_ok=True)
 
+    rpc_key = arg_after("--rpc-key", "")
+    if rpc_key:
+        from farcade.net.lxmf import ensure_rpc_key
+
+        ensure_rpc_key(workdir / "rnsconfig", rpc_key)
     lx = LxmfTransport(
         configdir=workdir / "rnsconfig",
         storagedir=workdir / "storage",

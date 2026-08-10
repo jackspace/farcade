@@ -80,6 +80,17 @@ def cmd_tui(args) -> int:
     return tui_main(args.url)
 
 
+def cmd_rns_key(args) -> int:
+    from farcade.net.lxmf import rns_rpc_key
+
+    try:
+        print(rns_rpc_key(args.prnsd_config_dir))
+    except FileNotFoundError:
+        print("no storage/transport_identity there - has prnsd run with that --config?")
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="farcade")
     p.add_argument("--version", action="version", version=f"farcade {__version__}")
@@ -95,6 +106,10 @@ def main(argv: list[str] | None = None) -> int:
     t = sub.add_parser("tui", help="terminal UI against a running node")
     t.add_argument("url", nargs="?", default="http://127.0.0.1:8765")
     t.set_defaults(fn=cmd_tui)
+
+    k = sub.add_parser("rns-key", help="print prnsd's shared-instance RPC key")
+    k.add_argument("prnsd_config_dir")
+    k.set_defaults(fn=cmd_rns_key)
 
     args = p.parse_args(sys.argv[1:] if argv is None else argv)
     if not getattr(args, "fn", None):

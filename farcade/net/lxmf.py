@@ -32,6 +32,37 @@ import RNS
 from farcade.net import TrustLevel
 
 
+def rns_rpc_key(prnsd_config_dir: str | Path) -> str:
+    """prnsd's shared-instance RPC key: sha256 of its raw transport
+    identity bytes (see docs/topology-prnsd.md). Raises FileNotFoundError
+    when the daemon has never run in that config dir."""
+    import hashlib
+
+    data = (Path(prnsd_config_dir) / "storage" / "transport_identity").read_bytes()
+    return hashlib.sha256(data).hexdigest()
+
+
+def ensure_rpc_key(configdir: str | Path, key_hex: str) -> None:
+    """Seed or patch an RNS client config so its shared-instance RPC
+    digest matches the daemon's. Must run BEFORE RNS() reads the config.
+    Idempotent; leaves an existing correct key alone."""
+    path = Path(configdir) / "config"
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"[reticulum]\n  rpc_key = {key_hex}\n", encoding="utf-8")
+        return
+    text = path.read_text(encoding="utf-8")
+    if f"rpc_key = {key_hex}" in text:
+        return
+    if "rpc_key" in text:
+        import re
+
+        text = re.sub(r"rpc_key\s*=\s*\S+", f"rpc_key = {key_hex}", text)
+    else:
+        text = text.replace("[reticulum]", f"[reticulum]\n  rpc_key = {key_hex}", 1)
+    path.write_text(text, encoding="utf-8")
+
+
 class NotAttachedToSharedInstance(RuntimeError):
     """This process became the RNS instance owner: prnsd was not there.
 
