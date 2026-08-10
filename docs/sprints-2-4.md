@@ -139,12 +139,24 @@ any two keepers with the same certs compute identical standings.
 
 | ID | task | acceptance / QA | model | size |
 |---|---|---|---|---|
-| 15.1 | Game certificate: end-of-game signing ceremony (both identities sign the final hash + result), cert encode/verify | A tampered log, wrong hash, or bad signature is **provably rejected**; certs verify offline with no scorekeeper | **opus** | L |
-| 15.2 | Scorekeeper node: collects certs (LXMF inbox + lobby-style announce), indexes by game_id, computes Elo/Glicko per game per identity | Two independent keepers fed the same certs publish byte-identical standings; a forged cert never enters the table | **opus** | L |
+| 15.1 | Game certificate via **signed moves**: each move carries its sender's identity signature (64B, still in budget; checkpoint-signing option for constrained links), so the finished log IS the cert and the loser's post-defeat cooperation is never needed — nobody signs "I lost", their signed moves add up to a loss (Jack's unsigned-loser question, 2026-08-10) | Winner submits alone and verifies; a cert missing either side's move signatures is rejected; tampered log/hash/signature provably rejected; offline verification | **opus** | L |
+| 15.2 | Scorekeeper node: collects certs (LXMF inbox + lobby-style announce), indexes by game_id, computes Elo/Glicko per game per identity; applies a **published abandonment policy** (N quiet days after M nudges = claimable timeout, from the signed-so-far log) deterministically | Two independent keepers fed the same certs + claims publish byte-identical standings; a forged cert never enters the table; the same timeout claim gets the same verdict from any keeper | **opus** | L |
 | 15.3 | Renders: standings as HTML page + NomadNet page + plain-text digest (email-ready) | A stranger can read the league table without any Farcade software | sonnet | M |
 | 15.4 | PGN export for chess games (interchange with the entire chess world) | A finished game imports cleanly into standard chess tools | sonnet | S |
 | 15.5 | Stretch: Swiss-system tournament pairing driven from the cert history | Pairings deterministic from standings; byes handled; no rematch until necessary | sonnet | M |
 | 15.6 | Bridges OUT to existing worlds (surveyed 2026-08-10: all per-game platforms are platform-bound or trust-based — none verify external games, so the scorekeeper stays the system of record): PGN→Lichess study import first; BGG play-logging as the any-game option | A Farcade chess league game viewable on Lichess from its PGN; bridge failures never affect the league record | sonnet | M |
+
+### Future, deliberately unscheduled: rewards (Jack, 2026-08-10)
+
+The two-currency line Jack drew is the design law: **earned can never be bought; bought can
+never touch gameplay.** The earned half needs no issuer — achievements are arithmetic over
+the verifiable cert history ("100 games played", "beat three higher-rated players"), so any
+viewer computes the same badges. Build that alongside P15 whenever. The purchased half
+(merch credits, subscriptions) requires an issuer — the first centralized, legally-entangled
+element (payments, tax, and gambling rules if prizes ever mix with purchases) — so it stays
+OUT of the protocol permanently; if wanted later it is a store next to the league, not part
+of it. Sponsor-funded tournament prizes (verified by cert, awarded by result) and direct
+merch are the sustainability shapes that keep gameplay pure.
 
 ---
 
