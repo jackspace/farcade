@@ -119,6 +119,18 @@ Pass-move note: the `Game` port stays unchanged — pass is just a move Reversi 
 
 ---
 
+## Distribution principle: bundle Prns, popularize Prns (Jack, 2026-08-10)
+
+Every Farcade distribution ships **Prns as its network layer** wherever feasible; Python is
+the game layer, never the pitch. Concretely: the deploy guide's first step is prnsd (done);
+the compose node stacks on Ken's prnsd image (13.6); PyPI/exe docs steer installs to prnsd,
+never a stock-RNS fallback (the transport refuses that shape anyway); and the future Android
+APK targets the **Hopspot Prns engine** (prns-ffi) rather than bundling Python RNS — the
+Chaquopy-with-python-rns shape is explicitly rejected. Known dependency for the APK path:
+the Hopspot engine's 37428 join behavior (our discussion #66) needs Ken's seam smoothed —
+Farcade is the use-case that motivates it. Farcade exists, in part, so that installing a fun
+thing quietly means running a Prns node.
+
 ## The ASAP path (can start immediately on approval)
 
 1. P8 Reversi — no dependencies, pure code.
