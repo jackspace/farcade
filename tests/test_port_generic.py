@@ -13,10 +13,11 @@ import pytest
 from farcade.core.session import Apply, Session
 from farcade.games.chess_game import ChessGame
 from farcade.games.connect4 import ConnectFour
+from farcade.games.reversi import Reversi
 from tests.conftest import NimGame
 
 GID = "00112233aabbccdd"
-GAMES = [NimGame(), ConnectFour(), ChessGame()]
+GAMES = [NimGame(), ConnectFour(), ChessGame(), Reversi()]
 
 
 @pytest.mark.parametrize("game", GAMES, ids=lambda g: g.id)

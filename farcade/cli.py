@@ -86,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = p.add_subparsers(dest="cmd")
 
     d = sub.add_parser("demo", help="play a bot locally in your browser")
-    d.add_argument("--game", choices=["chess", "c4"], default="chess")
+    d.add_argument("--game", choices=["chess", "c4", "reversi"], default="chess")
     d.add_argument("--port", type=int, default=8765)
     d.add_argument("--engine", choices=["stockfish", "random"], default="stockfish")
     d.add_argument("--think", type=float, default=0.2)

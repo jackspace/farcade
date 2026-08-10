@@ -14,4 +14,8 @@ def by_id(game_id: str):
         from farcade.games.connect4 import ConnectFour
 
         return ConnectFour()
+    if game_id == "reversi":
+        from farcade.games.reversi import Reversi
+
+        return Reversi()
     raise KeyError(f"unknown game id: {game_id!r}")

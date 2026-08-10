@@ -91,6 +91,7 @@ async function refresh() {
   view = await j(`/games/${gid}`);
   renderMeta(); renderChat();
   if (view.game === "chess") renderChess(); else if (view.game === "c4") renderC4();
+  else if (view.game === "reversi") renderReversi();
   else document.getElementById("board").innerHTML = `<pre>${view.ascii||""}</pre>`;
   document.getElementById("side").style.display = "block";
 }
@@ -180,6 +181,40 @@ function renderC4() {
     tbl.appendChild(tr);
   }
   board.innerHTML = ""; board.appendChild(tbl);
+}
+function renderReversi() {
+  const board = document.getElementById("board");
+  const cells = view.model.board, legal = new Set(view.model.legal || []);
+  const sqName = i => "abcdefgh"[i % 8] + (Math.floor(i / 8) + 1);
+  const tbl = document.createElement("table"); tbl.className = "board";
+  for (let r = 0; r < 8; r++) {
+    const tr = document.createElement("tr");
+    for (let c = 0; c < 8; c++) {
+      const i = r * 8 + c;
+      const td = document.createElement("td"); td.className = "c4";
+      const v = cells[i];
+      td.textContent = v === "0" ? "⚫" : v === "1" ? "⚪" : "";
+      if (legal.has(i) && view.our_turn) {
+        td.classList.add("legal");
+        td.onclick = async () => {
+          await j(`/games/${gid}/move`, post({move: sqName(i)})); refresh();
+        };
+      }
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  }
+  board.innerHTML = ""; board.appendChild(tbl);
+  if (legal.has(64) && view.our_turn) {
+    const b = document.createElement("button");
+    b.textContent = "no placement: pass";
+    b.onclick = async () => { await j(`/games/${gid}/move`, post({move: "pass"})); refresh(); };
+    board.appendChild(b);
+  }
+  const [x, o] = view.model.counts || [0, 0];
+  const score = document.createElement("div");
+  score.textContent = `⚫ ${x}  ⚪ ${o}`;
+  board.appendChild(score);
 }
 const post = body => ({method: "POST", headers: {"Content-Type": "application/json"},
                        body: JSON.stringify(body)});
