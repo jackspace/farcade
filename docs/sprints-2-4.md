@@ -127,6 +127,25 @@ Pass-move note: the `Game` port stays unchanged — pass is just a move Reversi 
 | 14.6 | Lobby amplifier: a peer-run bulletin that re-publishes heard lobby cards (propagation-node pattern) for sparse meshes | Cards stay signed by their authors — amplifier cannot forge (test); purely optional infrastructure, holds no authority | sonnet | M |
 | 14.7 | Stretch: correspondence time controls (multi-day clocks in logged state) | Clock state survives crash-replay identically both sides | sonnet | M |
 
+### P15 — leagues for every game, without a blockchain (Jack, 2026-08-10)
+
+No consensus machinery: a league needs attestation and availability, and dual signatures
+plus deterministic math give both for free. A **game certificate** = final log + result +
+both players' Reticulum-identity signatures over the final state hash; anyone can replay,
+recompute, and verify. Certificates are **game-agnostic** (the log header carries game_id),
+so one scorekeeper natively hosts a league per game, and one player identity holds a rating
+in each. Scorekeepers have zero authority — they cannot forge or alter, only collect — and
+any two keepers with the same certs compute identical standings.
+
+| ID | task | acceptance / QA | model | size |
+|---|---|---|---|---|
+| 15.1 | Game certificate: end-of-game signing ceremony (both identities sign the final hash + result), cert encode/verify | A tampered log, wrong hash, or bad signature is **provably rejected**; certs verify offline with no scorekeeper | **opus** | L |
+| 15.2 | Scorekeeper node: collects certs (LXMF inbox + lobby-style announce), indexes by game_id, computes Elo/Glicko per game per identity | Two independent keepers fed the same certs publish byte-identical standings; a forged cert never enters the table | **opus** | L |
+| 15.3 | Renders: standings as HTML page + NomadNet page + plain-text digest (email-ready) | A stranger can read the league table without any Farcade software | sonnet | M |
+| 15.4 | PGN export for chess games (interchange with the entire chess world) | A finished game imports cleanly into standard chess tools | sonnet | S |
+| 15.5 | Stretch: Swiss-system tournament pairing driven from the cert history | Pairings deterministic from standings; byes handled; no rematch until necessary | sonnet | M |
+| 15.6 | Bridges OUT to existing worlds (surveyed 2026-08-10: all per-game platforms are platform-bound or trust-based — none verify external games, so the scorekeeper stays the system of record): PGN→Lichess study import first; BGG play-logging as the any-game option | A Farcade chess league game viewable on Lichess from its PGN; bridge failures never affect the league record | sonnet | M |
+
 ---
 
 ## Distribution principle: bundle Prns, popularize Prns (Jack, 2026-08-10)
