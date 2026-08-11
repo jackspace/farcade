@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+# Every game the registry can resolve. One list, so a front-end that has to
+# offer a choice (the CLI's --game, companion mode's "play what?") never
+# drifts from what by_id actually knows.
+GAME_IDS = ("chess", "c4", "reversi")
+
 
 def by_id(game_id: str):
     """Registry: INVITE carries Game.id; this resolves it. Imports stay
