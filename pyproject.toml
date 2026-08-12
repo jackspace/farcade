@@ -25,6 +25,11 @@ dev = [
 tui = [
     "textual>=0.80",
 ]
+# Only needed to drive a real radio. The adapter takes its interface by
+# injection, so the bench and the test suite run without this installed.
+meshtastic = [
+    "meshtastic>=2.3",
+]
 
 [project.scripts]
 farcade = "farcade.cli:main"

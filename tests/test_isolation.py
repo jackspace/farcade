@@ -35,6 +35,7 @@ PROTO_FORBIDDEN = (
     "farcade.node",
     "farcade.net.lxmf",
     "farcade.net.loopback",
+    "farcade.net.meshtastic",
 )
 
 PROTO_PROBE = r"""
