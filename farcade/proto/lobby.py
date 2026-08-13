@@ -77,6 +77,28 @@ class Heard:
         return max(0.0, now - self.heard_at)
 
 
+def looks_like_card(payload: bytes) -> bool:
+    """Cheap three-way discrimination, before any parsing.
+
+    One transport carries three kinds of inbound bytes and they have to be
+    told apart without guessing:
+
+        0x01         a lobby card. VERSION is 1 and it is the first byte.
+        0x10..0x1F   a binary protocol frame, (VERSION << 4 | type).
+        >= 0x20      a person typing. ASCII printables start at 0x20 and
+                     UTF-8 continuation starts at 0xC2.
+
+    The three ranges cannot overlap, which is a property of the encodings
+    rather than a convention anyone has to remember, and
+    tests/test_lobby.py asserts it against the real parser table instead
+    of trusting this comment.
+
+    True here means "worth trying to verify", never "authentic". Only
+    decode_card() decides that, and it checks a signature.
+    """
+    return len(payload) > 0 and payload[0] == VERSION
+
+
 def _games_mask(games: Iterable[str], catalog: tuple[str, ...]) -> int:
     mask = 0
     for game in games:

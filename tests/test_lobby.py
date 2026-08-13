@@ -239,3 +239,55 @@ def test_a_newer_card_from_the_same_peer_replaces_the_old_one():
 
     assert len(lobby) == 1
     assert lobby.entries(now=200.0)[0].card.display_name == "second"
+
+
+# -- three-way discrimination, against the real parser table ---------------
+
+
+def test_a_card_is_never_mistaken_for_a_binary_frame_or_for_typing():
+    """The dispatch rule in companion/host.py says binary frames occupy
+    0x10..0x1F and typed characters start at 0x20. A card claims 0x01. This
+    asserts the three spaces are disjoint over real data rather than over
+    the paragraph that describes them."""
+    from farcade.companion.parse import parse_input
+    from farcade.proto.lobby import looks_like_card
+    from farcade.proto.messages import Msg as WireMsg
+    from farcade.proto.messages import MsgType, encode_binary
+
+    card = publish(RNS.Identity(), name="jack")
+    assert looks_like_card(card)
+    assert card[0] == 0x01
+    assert not (0x10 <= card[0] <= 0x1F)  # not a protocol frame
+    assert card[0] < 0x20  # not something a person can type
+
+    # Every binary message type must be refused as a card.
+    for kind in MsgType:
+        try:
+            wire = encode_binary(WireMsg(kind, "00112233aabbccdd", 0))
+        except Exception:
+            continue
+        assert 0x10 <= wire[0] <= 0x1F, (kind, wire[0])
+        assert not looks_like_card(wire), kind
+
+    # And every input the human parser accepts must be refused as a card.
+    typed = [
+        "play chess", "Play Chess!", "lets play othello", "d3", "board?",
+        "nice move", "help", "resign", "rules", "e4", "0", "6", "pass",
+        "échec", "中文", "  board  ",
+    ]
+    for text in typed:
+        parse_input(text)  # must not raise; it is total by design
+        payload = text.encode("utf-8")
+        if payload:
+            assert payload[0] >= 0x20, text
+            assert not looks_like_card(payload), text
+
+
+def test_looks_like_card_is_a_filter_not_a_verdict():
+    """It must never be mistaken for authentication."""
+    from farcade.proto.lobby import looks_like_card
+
+    assert looks_like_card(b"\x01" + b"garbage" * 20)
+    with pytest.raises(WireError):
+        read(b"\x01" + b"garbage" * 20)
+    assert not looks_like_card(b"")
