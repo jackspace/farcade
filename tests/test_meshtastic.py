@@ -254,3 +254,128 @@ def test_a_full_game_completes_over_the_adapter(tmp_path):
     # Both sides agree on the game, which is the only claim that matters.
     peer_entry = bot.peer.games[gid]
     assert peer_entry.session.our_hash() == entry.session.our_hash()
+
+
+# -- 13.1b: a human on a stock Meshtastic client ----------------------------
+
+
+def stock_client_rig(tmp_path):
+    """A Farcade host with the text port open, and a bare radio standing in
+    for somebody's unmodified Meshtastic app."""
+    from farcade.companion.host import CompanionHost
+    from farcade.companion.reply import NARROW_REPLY
+    from farcade.net.meshtastic import TEXT_MESSAGE_PORT
+
+    mesh_host, mesh_human = FakeMesh(A_NUM), FakeMesh(B_NUM)
+    mesh_host.link(mesh_human)
+    host_t = MeshtasticTransport(mesh_host, text_port=TEXT_MESSAGE_PORT, subscribe=False)
+    mesh_host.transport = host_t
+    (tmp_path / "host").mkdir()
+    node = Node(host_t, storage=tmp_path / "host")
+    companion = CompanionHost(
+        node,
+        storage=tmp_path / "host",
+        # The real default_bot searches (and shells out to Stockfish for
+        # chess). This suite is about the link, not the opponent.
+        bot_factory=lambda _gid: RandomPlayer(seed=11),
+        max_reply=NARROW_REPLY,
+    )
+
+    def human_says(text: str) -> str:
+        """Type into the channel the way a stock client would: plain text on
+        the text port, no Farcade software anywhere near it."""
+        mesh_human.sendData(
+            text.encode("utf-8"),
+            destinationId=host_t.address,
+            portNum=TEXT_MESSAGE_PORT,
+            wantAck=False,
+        )
+        host_t.pump()
+        return mesh_host.sent[-1][0].decode("utf-8")
+
+    return companion, host_t, mesh_host, human_says
+
+
+def test_a_stock_client_typing_into_the_channel_reaches_companion_mode(tmp_path):
+    _companion, _host_t, _mesh, human_says = stock_client_rig(tmp_path)
+    reply = human_says("play c4")
+    # A playable board, not just any non-empty string: the column labels, a
+    # grid row, whose turn it is, and what to type next.
+    assert "0 1 2 3 4 5 6" in reply
+    assert ". . . . . . ." in reply
+    assert "to move" in reply
+    assert "Your move" in reply
+
+
+def test_the_reply_goes_back_out_on_the_port_it_was_heard_on(tmp_path):
+    from farcade.net.meshtastic import TEXT_MESSAGE_PORT
+
+    _companion, _host_t, mesh, human_says = stock_client_rig(tmp_path)
+    human_says("help")
+    (_payload, _dest, port, _ack) = mesh.sent[-1]
+    # Answered in the channel the person is actually reading, not on the
+    # binary port where a stock app would never see it.
+    assert port == TEXT_MESSAGE_PORT
+
+
+def test_every_reply_a_human_can_provoke_fits_the_narrow_link(tmp_path):
+    """The measurement that made 13.1b real: boards already fit 230 bytes but
+    the full help table is 280, so a narrow link needs a shorter help rather
+    than a board cut in half."""
+    from farcade.companion.reply import NARROW_REPLY
+
+    _companion, _host_t, _mesh, human_says = stock_client_rig(tmp_path)
+    provocations = [
+        "help",
+        "play reversi",  # the widest board of the three
+        "board",
+        "rules",
+        "d3",
+        "what even is this",
+        "play chess",
+        "board",
+        "e4",
+        "resign",
+        "help",
+    ]
+    for text in provocations:
+        reply = human_says(text)
+        assert len(reply.encode("utf-8")) <= NARROW_REPLY, (
+            f"reply to {text!r} is {len(reply.encode('utf-8'))} bytes"
+        )
+
+
+def test_the_narrow_help_still_teaches_how_to_start(tmp_path):
+    """Truncating the table would cut the move syntax off the bottom, so the
+    compact form is written rather than sliced."""
+    from farcade.companion.reply import NARROW_REPLY, help_text
+    from farcade.games import GAME_IDS
+
+    wide = help_text(GAME_IDS)
+    narrow = help_text(GAME_IDS, budget=NARROW_REPLY)
+
+    assert len(wide.encode("utf-8")) > NARROW_REPLY  # the reason this exists
+    assert len(narrow.encode("utf-8")) <= NARROW_REPLY
+    assert not narrow.endswith("...")  # written short, not chopped
+    assert "play" in narrow
+    for game in GAME_IDS:
+        assert game in narrow
+
+
+def test_a_full_game_against_a_bot_from_a_stock_client(tmp_path):
+    """13.1b acceptance: someone with no Farcade software plays a game to
+    completion by typing into a Meshtastic channel."""
+    companion, _host_t, _mesh, human_says = stock_client_rig(tmp_path)
+    human_says("play c4")
+    cg = companion.games[node_id(B_NUM)]
+
+    for _ in range(50):
+        if cg.finished:
+            break
+        legal = cg.game.legal_moves(cg.session.state)
+        if not legal:
+            break
+        human_says(str(cg.game.encode_move(legal[0])[0]))
+
+    assert cg.session.log.plies > 4, cg.session.log.plies
+    assert companion.max_reply == 230

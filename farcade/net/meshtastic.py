@@ -45,6 +45,12 @@ log = logging.getLogger(__name__)
 #: applications, so this never collides with channel text messages.
 PRIVATE_APP_PORT = 256
 
+#: Meshtastic's ordinary text-message port, the one every stock client sends
+#: on. Opt in with `text_port=TEXT_MESSAGE_PORT` and a person typing into the
+#: channel from an unmodified app reaches companion mode. Off by default:
+#: joining a shared channel's chat is a decision, not a side effect.
+TEXT_MESSAGE_PORT = 1
+
 #: The transport's hard ceiling. Meshtastic's Data.payload tops out near
 #: 237 bytes; 230 is the conservative documented figure and leaves room
 #: for framing. The protocol's own BUDGET is 200, so a well-formed
@@ -77,6 +83,7 @@ class MeshtasticTransport:
         interface: Any,
         *,
         port_num: int = PRIVATE_APP_PORT,
+        text_port: int | None = None,
         want_ack: bool = False,
         inbox_limit: int = DEFAULT_INBOX_LIMIT,
         subscribe: bool = True,
@@ -87,11 +94,17 @@ class MeshtasticTransport:
         package installed."""
         self.iface = interface
         self.port_num = port_num
+        self.text_port = text_port
         self.want_ack = want_ack
         self.dropped_sends = 0
         self.dropped_inbound = 0
         self.receive_cb: Callable[[str, bytes], None] | None = None
         self._inbound: deque[tuple[str, bytes]] = deque(maxlen=inbox_limit)
+        # Reply on the port you were heard on. A stock client typing into the
+        # channel gets an answer in the channel; a Farcade peer speaking binary
+        # gets binary back. Keeping this here leaves send() a two-argument
+        # method and the Transport port unchanged.
+        self._heard_on: dict[str, int] = {}
 
         log.info(
             "farcade: meshtastic transport up as %s, trust=%s (channel PSK: any holder of the "
@@ -123,7 +136,7 @@ class MeshtasticTransport:
             self.iface.sendData(
                 payload,
                 destinationId=peer,
-                portNum=self.port_num,
+                portNum=self._heard_on.get(peer, self.port_num),
                 wantAck=self.want_ack,
             )
         except Exception as error:  # the radio is a moving part; a send is never load-bearing
@@ -198,12 +211,16 @@ class MeshtasticTransport:
         """Ingest one decoded meshtastic packet. Public so a bench rig can
         deliver packets without pubsub in the picture."""
         decoded = packet.get("decoded") or {}
-        if decoded.get("portnum") not in (self.port_num, str(self.port_num)):
+        accepted = [self.port_num] if self.text_port is None else [self.port_num, self.text_port]
+        port = decoded.get("portnum")
+        port = next((p for p in accepted if port in (p, str(p))), None)
+        if port is None:
             return
         payload = decoded.get("payload")
         if not payload:
             return
         sender = packet.get("fromId") or node_id(packet.get("from", 0))
+        self._heard_on[sender] = port
         if len(self._inbound) == self._inbound.maxlen:
             self.dropped_inbound += 1
             log.warning(

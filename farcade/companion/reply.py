@@ -21,12 +21,23 @@ from farcade.core.game import Outcome, Winner
 # half is confusing, but a board that never arrives is worse.
 MAX_REPLY = 900
 
+# A Meshtastic text message is an order of magnitude narrower than an LXMF one.
+# Measured against it, every board already fits (reversi is the widest at 215
+# bytes) and only help_text overflows, so the narrow link needs a shorter help
+# rather than a redesign. See fit() and help_text below.
+NARROW_REPLY = 230
+
+
+def fit(text: str, budget: int = MAX_REPLY) -> str:
+    """Clamp a finished reply to a link's ceiling, ellipsis and all."""
+    if len(text) <= budget:
+        return text
+    return text[: budget - 3].rstrip() + "..."
+
 
 def _frame(*blocks: str) -> str:
     body = "\n\n".join(b.strip("\n") for b in blocks if b and b.strip())
-    if len(body) <= MAX_REPLY:
-        return body
-    return body[: MAX_REPLY - 3].rstrip() + "..."
+    return fit(body, MAX_REPLY)
 
 
 def render_board(game: Any, state: Any, header: str = "", footer: str = "") -> str:
@@ -49,7 +60,7 @@ def outcome_line(outcome: Outcome, human_seat: int) -> str:
     return f"{who} - {outcome.reason}."
 
 
-def help_text(games: tuple[str, ...], active: str = "") -> str:
+def help_text(games: tuple[str, ...], active: str = "", budget: int = MAX_REPLY) -> str:
     lines = [
         "Farcade - play right here, nothing to install.",
         "",
@@ -62,7 +73,19 @@ def help_text(games: tuple[str, ...], active: str = "") -> str:
     ]
     if active:
         lines += ["", f"Right now we are playing {active}."]
-    return _frame("\n".join(lines))
+    full = _frame("\n".join(lines))
+    if len(full) <= budget:
+        return full
+    # Too narrow for the table, so drop to the one line that still teaches
+    # someone how to start. Truncating the table would cut the move syntax
+    # off the bottom, which is the part a first-time player needs most.
+    compact = [
+        "Farcade. Say 'play <game>': " + ", ".join(games) + ".",
+        "Then type a move. Also: board, rules, resign.",
+    ]
+    if active:
+        compact.append(f"Playing {active}.")
+    return fit(" ".join(compact), budget)
 
 
 def no_game_text(games: tuple[str, ...]) -> str:

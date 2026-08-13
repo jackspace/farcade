@@ -30,6 +30,8 @@ from typing import Any
 
 from farcade.companion.parse import Cmd, parse_input
 from farcade.companion.reply import (
+    MAX_REPLY,
+    fit,
     help_text,
     no_game_text,
     outcome_line,
@@ -73,11 +75,16 @@ class CompanionHost:
         storage: Path | None = None,
         bot_factory: Callable[[str], Player] = default_bot,
         on_event: Callable[[dict], None] | None = None,
+        max_reply: int = MAX_REPLY,
     ):
         self.node = node
         self.transport = node.peer.transport
         self.storage = storage
         self.bot_factory = bot_factory
+        # Narrow links (Meshtastic text is ~230 bytes against LXMF's 900) say so
+        # here, and every reply is clamped on the way out rather than each
+        # builder having to know which transport it is talking to.
+        self.max_reply = max_reply
         self.on_event = on_event or (lambda e: None)
         self.games: dict[str, CompanionGame] = {}
         self.chat_log: dict[str, list[str]] = {}
@@ -116,6 +123,7 @@ class CompanionHost:
         except Exception as e:  # a bug here must not kill a live conversation
             self._emit("companion_error", peer=peer, error=repr(e))
             reply = "Something went wrong on my side. Say 'board' to pick up where we were."
+        reply = fit(reply, self.max_reply)
         self._send(peer, reply)
         return reply
 
@@ -124,7 +132,11 @@ class CompanionHost:
         cg = self.games.get(peer)
 
         if cmd.kind is Cmd.HELP:
-            return help_text(GAME_IDS, active=cg.game_id if cg and not cg.finished else "")
+            return help_text(
+                GAME_IDS,
+                active=cg.game_id if cg and not cg.finished else "",
+                budget=self.max_reply,
+            )
         if cmd.kind is Cmd.PLAY:
             # A game's name can also be a move. "c4" is the connect-four id, a
             # reversi square AND a legal chess pawn push, so a live position
