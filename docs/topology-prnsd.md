@@ -43,6 +43,44 @@ port at the OS level (PowerShell):
     Get-NetTCPConnection -State Listen -LocalPort 37428 | Select LocalAddress,LocalPort,OwningProcess
     # OwningProcess must be prnsd's PID
 
+## On Linux the bus is not a TCP port, and that gap could have cost us a soak
+
+Added 2026-08-14. Everything above was proven on Windows, where the shared instance really is
+TCP 37428. **On Linux, RNS uses an abstract unix socket, `@rns/default`.** The PowerShell recipe
+has no equivalent there, so a Linux peer had no documented way to prove its instance owner.
+
+That is not cosmetic. Measured on a third Linux box, 2026-08-14:
+
+    rnsd  pid 906094  unix @rns/default (LISTEN)     <- rnsd owns the bus
+    meshchat                                          <- attached to it as a client
+
+Start a Farcade peer on that box and this happens:
+
+    peer's RNS finds @rns/default and attaches as a CLIENT
+    LxmfTransport's require_attached guard sees "client"           -> green
+    probe_shared_instance.py prints PROBE_ROLE=client, exits 0      -> green
+    the game plays, the soak accumulates numbers                    -> green
+
+...against **stock RNS**, which is the one thing this transport exists to refuse. Every guard
+passes because none of them ever looked at who was on the other end of the socket.
+
+**Use `scripts/probe_instance_owner.py`.** It names the owning process on both platforms:
+
+    python scripts/probe_instance_owner.py              # exit 0 only if prnsd owns the bus
+    sudo python scripts/probe_instance_owner.py         # Linux: needs to read the owner's /proc/<pid>/fd
+
+Exit codes are deliberate: `0` match, `1` mismatch, **`2` could-not-determine — never 0.** A check
+that cannot see must not report success.
+
+Proven to go red on real hosts rather than fixtures, 2026-08-14:
+
+    the Windows host     TCP 37428 held by reticulum-meshchat    -> OWNER_NAME=python.exe, MISMATCH, exit 1
+    a third Linux box  @rns/default held by rnsd, unprivileged -> UNDETERMINED, exit 2
+    a third Linux box  @rns/default held by rnsd, under sudo   -> OWNER_NAME=rnsd, MISMATCH, exit 1
+    both hosts, told the truth via --expect           -> MATCH, exit 0
+
+The last line matters as much as the others: a gate that only ever returns red is not a gate.
+
 ## The evidence (all under .local/, 2026-08-09)
 
 - **P4.1** two processes exchanged ping/pong over LXMF: both artifacts
