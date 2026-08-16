@@ -16,8 +16,8 @@ $env:PYTHONPATH = 'C:\agents\farcade'
 $log = 'C:\agents\farcade\.local\responder-service.log'
 
 function Log($msg) {
-    # UTC with an explicit Z: the task-scheduler session has shown a drifted local TZ, and an
-    # ambiguous stamp in a service log is worse than none.
+    # UTC with an explicit Z, so entries correlate with prnsd's own UTC log lines without
+    # timezone arithmetic during an incident.
     "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss'))Z $msg" | Out-File -Append -FilePath $log -Encoding utf8
 }
 
