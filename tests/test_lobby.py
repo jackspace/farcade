@@ -271,9 +271,22 @@ def test_a_card_is_never_mistaken_for_a_binary_frame_or_for_typing():
 
     # And every input the human parser accepts must be refused as a card.
     typed = [
-        "play chess", "Play Chess!", "lets play othello", "d3", "board?",
-        "nice move", "help", "resign", "rules", "e4", "0", "6", "pass",
-        "échec", "中文", "  board  ",
+        "play chess",
+        "Play Chess!",
+        "lets play othello",
+        "d3",
+        "board?",
+        "nice move",
+        "help",
+        "resign",
+        "rules",
+        "e4",
+        "0",
+        "6",
+        "pass",
+        "échec",
+        "中文",
+        "  board  ",
     ]
     for text in typed:
         parse_input(text)  # must not raise; it is total by design
