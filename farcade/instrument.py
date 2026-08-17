@@ -95,6 +95,33 @@ class InstrumentedTransport:
                     verdict = e.get("verdict")
         if msg is not None:
             self._row(now, msg, "in", sender, verdict)
+        elif self.event_source is not None:
+            # Not a protocol frame: a person typing to companion mode. The host
+            # emits companion_move while handling the delivery, so the events
+            # are visible here by the same synchronous-delivery argument the
+            # MOVE verdicts rest on. by=human is the inbound text; by=bot is
+            # the answering move the host embedded in its text reply.
+            for e in self.event_source():
+                if e.get("kind") == "companion_move":
+                    self._companion_row(now, e, sender)
+
+    def _companion_row(self, now: float, e: dict, sender: str) -> None:
+        direction = "in" if e.get("by") == "human" else "out"
+        with self.csv_path.open("a", newline="", encoding="utf-8") as f:
+            csv.writer(f).writerow(
+                [
+                    f"{now:.3f}",
+                    e.get("gid", ""),
+                    direction,
+                    "COMPANION_MOVE",
+                    e.get("ply", ""),
+                    "",
+                    "",
+                    "",
+                    "",
+                    e.get("peer", sender),
+                ]
+            )
 
     def _decode(self, payload: bytes) -> Msg | None:
         try:
