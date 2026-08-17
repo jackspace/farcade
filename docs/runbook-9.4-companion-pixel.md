@@ -2,7 +2,7 @@
 
 Written 2026-08-16. A full game from stock Sideband on the Pixel XL against the bot on
 the Windows host, over prnsd. Written so someone who has never touched this stack can run it.
-Everything here happens on the Windows host (the Windows machine) and the Pixel; nothing touches
+Everything here happens on the Windows host and the Pixel; nothing touches
 the Pi.
 
 **The one dangerous fact:** step 2 restarts the Windows host's prnsd, which drops the Farcade TCP
@@ -65,7 +65,7 @@ for a MATCH, and re-attaches the responder. Give it a minute, then verify all th
 ```powershell
 # The new listener is up:
 Get-NetTCPConnection -LocalPort 4242 -State Listen
-# The the Pi link came back (note the NEW pid — the old one died with the restart):
+# The Pi link came back (note the NEW pid — the old one died with the restart):
 Get-NetTCPConnection -RemotePort 4243 -State Established
 # The wrapper's own log ends in "owner MATCH - starting responder":
 Get-Content .local\responder-service.log -Tail 3

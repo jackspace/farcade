@@ -1,4 +1,4 @@
-"""P6.4 initiator: the the Windows host side of the 24h soak.
+"""P6.4 initiator: the Windows side of the 24h soak.
 
 SoakRunner paces connect-four invitations and moves against the wall
 clock; the transport MUST be attached to prnsd (require_attached=True),

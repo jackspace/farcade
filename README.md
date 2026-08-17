@@ -36,7 +36,7 @@ knows none of them.
 Sprint 1 nearly complete (2026-08-09): P0–P6 landed — two game plugins, adversarial channel
 harness (1000 lossy games, zero desyncs), LXMF transport over prnsd proven cross-host
 (the Windows host ↔ Pi, engine chess to checkmate with identical hashes both sides), instrumentation
-CSV + metrics + paced soak runner. A 24 h the Windows host ↔ Pi soak (P6.4) is running. Interfaces are
+CSV + metrics + paced soak runner. A 24 h Windows ↔ Pi soak (P6.4) is running. Interfaces are
 not stable yet.
 
 ## Quick start (will firm up as sprint 1 lands)
