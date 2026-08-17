@@ -21,8 +21,37 @@ from farcade.companion import CompanionHost
 from farcade.instrument import InstrumentedTransport
 from farcade.net.lxmf import LxmfTransport
 from farcade.node import Node
+from farcade.players import RandomPlayer, default_bot
 
 ANNOUNCE_EVERY_S = 1800
+
+
+class ProtocolBot:
+    """The opponent for peers that speak the protocol instead of chatting.
+
+    CompanionHost's bot only plays conversational games, so without this a
+    protocol peer can invite the host, get its accept, and then wait
+    forever for a move. Node.tick drives one auto player across every game,
+    so dispatch on the game the peer actually invited us to.
+
+    Engine failures degrade to a random mover, matching CompanionHost's
+    discipline: tick is called bare in the main loop, and a dead engine
+    must not take the host down with it.
+    """
+
+    def __init__(self):
+        self._bots: dict[str, object] = {}
+
+    def choose_move(self, game, state):
+        bot = self._bots.get(game.id)
+        if bot is None:
+            bot = default_bot(game.id)
+            self._bots[game.id] = bot
+        try:
+            return bot.choose_move(game, state)
+        except Exception:
+            self._bots[game.id] = RandomPlayer()
+            return self._bots[game.id].choose_move(game, state)
 
 
 def main() -> int:
@@ -59,7 +88,7 @@ def main() -> int:
         return out
 
     inst = InstrumentedTransport(lx, workdir / "events.csv", event_source=since)
-    node = Node(inst, storage=workdir / "games")
+    node = Node(inst, storage=workdir / "games", auto_player=ProtocolBot())
     holder["node"] = node
     # Companion events go through the node's funnel so the instrument sees
     # one ordered stream: protocol events and companion events interleaved.
