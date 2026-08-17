@@ -34,8 +34,8 @@ never 0.**
 **`Farcade Link` (TCPClient -> the Pi's port 4243) deliberately DISABLED.** That interface dials the same
 prnsd carrying the operator's long-run measurement, and with `enable_transport = Yes` our announces would
 reach the radio link under characterisation. Original config backed up as
-`config.backup-20260814`; the only edit is one `interface_enabled` line. Asked the operator on
-the ops log before touching it, not after.
+`config.backup-20260814`; the only edit is one `interface_enabled` line. Asked the
+operator before touching it, not after.
 
 `USB Auto`, `Bluetooth Auto` and the `AutoInterface` were already `No` in that config, which matters
 more than usual: a dev board sits on COM13 and opening that port resets the board, and another bench board had
@@ -90,7 +90,7 @@ Worth remembering the next time a "clean workdir" is used to isolate a run.
     prnsd 38080         running, owns 37428, transport on, no interfaces online
     responder           redacted-responder-identity, attached=True
     MeshChat            STOPPED on the Windows host, no auto-restart
-    Farcade Link        disabled, pending the operator's answer on the ops log
+    Farcade Link        disabled, pending the operator's answer
     artifacts           .local/run-a, run-a2, run-a3, run-b  (gitignored)
 
 ## Next

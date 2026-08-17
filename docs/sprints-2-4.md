@@ -106,9 +106,9 @@ Pass-move note: the `Game` port stays unchanged — pass is just a move Reversi 
 | ID | task | acceptance / QA | model | size |
 |---|---|---|---|---|
 | 13.1 | Meshtastic transport adapter (host-side via Meshtastic python API to a radio node) | Binary codec ≤230B enforced; trust=CHANNEL_KEY stated in logs; loopback-bench game first | **opus** | L |
-| 13.2 | Meshtastic live game via **the operator's mesh** (Jack's call 2026-08-10): a Farcade host drives one of the operator's fleet nodes, meshing-around-BBS pattern; an ask to the mesh operator at sprint-3 start | Full game over LoRa; events CSV becomes the first real LoRa link-quality dataset | sonnet | L |
+| 13.2 | Meshtastic live game via **the operator's LoRa mesh** (Jack's call 2026-08-10): a Farcade host drives one of the operator's fleet nodes, meshing-around-BBS pattern; an ask to the mesh operator at sprint-3 start | Full game over LoRa; events CSV becomes the first real LoRa link-quality dataset | sonnet | L |
 | 13.3 | Checkers plugin (game #4) | Same bar as Reversi: port tests + 500 chaos games | sonnet | M |
-| 13.4 | Voice wired: Ollama on the P40, engine moves + model banter (**gated on the operator's sign-off**) | Black-hole test still passes; latency budget: voice never delays a move | sonnet | M |
+| 13.4 | Voice wired: Ollama on the P40, engine moves + model banter (**gated on the mesh operator's sign-off**) | Black-hole test still passes; latency budget: voice never delays a move | sonnet | M |
 | 13.5 | Web UI polish: move history, resign/draw buttons, board flip, multi-game switcher | Playable multi-game session from the S24 | sonnet | L |
 | 13.6 | Docker compose soak node: prnsd (Ken's image) + responder + volumes | `docker compose up` on a clean Linux box = joinable peer; identity survives restart | sonnet | M |
 | 13.7 | **Serverless lobby, core** (Jack 2026-08-10): nodes announce a well-known `farcade.lobby` aspect with a compact signed card (games offered, display name); every node aggregates heard announces into a local lobby list with freshness ages | Card fits the 200-byte budget; two bench nodes discover each other with NO prior exchange of addresses; forged-card test rejected by identity check | **opus** | L |
@@ -178,7 +178,7 @@ thing quietly means running a Prns node.
 2. P9 companion mode — needs the Pixel XL with stock Sideband for 9.4 (already on the
    bench, live session) and prnsd on the Windows host (already running).
 3. P11.1/11.2 are minutes each; fold in early.
-4. Sprint 3's 13.2 and 13.4 need the operator coordination — flag ahead when sprint 3 nears.
+4. Sprint 3's 13.2 and 13.4 need mesh-operator coordination — flag ahead when sprint 3 nears.
 
 ## Reuse (found in exploration, nothing new invented)
 

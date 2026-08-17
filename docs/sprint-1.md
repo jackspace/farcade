@@ -43,7 +43,7 @@ platform, not the chess**:
 | First game | **Chess** | Best-supported library, and Jack wants to play it |
 | Topology | **Pure peer-to-peer** | Two bound peers. No server, no matchmaking, no discovery |
 | Interfaces | **TUI *and* local web UI** | Both. See §Interfaces |
-| Voice | **Seam in sprint 1, wired in sprint 2** | P40 has tenants (Ollama, other tenants) and needs the operator's sign-off; must not block the harness |
+| Voice | **Seam in sprint 1, wired in sprint 2** | P40 has tenants (Ollama, other tenants) and needs the mesh operator's sign-off; must not block the harness |
 | Hosts | **the Windows host + one Raspberry Pi** | |
 | Repo | **A new private repo** | Not Prns work |
 
@@ -269,7 +269,7 @@ P3.7 is the most valuable artifact in the sprint. It turns "it worked once" into
 Everything previously listed as "not in sprint 1" now has a home.
 
 **Tier 1 — next sprint**
-- Voice / inference wired to Ollama on the P40 (ask the operator first). Engine moves, model talks. One P40
+- Voice / inference wired to Ollama on the P40 (ask the P40's operator first). Engine moves, model talks. One P40
   serves both peers because turn-based play is strictly alternating.
 - Checkers or draughts as the third game plugin.
 - Meshtastic transport adapter, including the "human on a stock client plays a bot" path.

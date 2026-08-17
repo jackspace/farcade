@@ -11,16 +11,15 @@ exists and is not optional.
 
 ---
 
-## 1. Get the operator's clear (do not skip)
+## 1. Get the measurement owner's clear (do not skip)
 
-On the ops log, as a **reply to the operator's latest comment** (top-level comments
-don't notify), post:
+Whoever holds the running measurement gets asked first, in writing:
 
 > About to add a TCP listener to the Windows host's farcade prnsd and restart it for the 9.4
 > companion test. The restart drops the Farcade TCP link to the Pi. Clear, or hold?
 
-Wait for an explicit "clear". Config changes void measurement windows, and the operator is the
-measurer.
+Wait for an explicit "clear". Config changes void measurement windows, and the
+measurer decides.
 
 ## 2. Add a listening interface and restart prnsd (PowerShell, on the Windows host)
 
@@ -72,10 +71,10 @@ Get-NetTCPConnection -RemotePort 4243 -State Established
 Get-Content .local\responder-service.log -Tail 3
 ```
 
-**Stamp the flap on the ops log** (reply to the operator): the time prnsd went down and the time the
+**Stamp the flap on the ops log**: the time prnsd went down and the time the
 4243 session re-established. If 4243 does not come back within ~2 minutes, restore the
 backup config (`Copy-Item .local\prnsd-config\config.pre-couch-tcp .local\prnsd-config\config -Force`),
-repeat 2c–2e, and stop here — tell the operator what happened.
+repeat 2c–2e, and stop here — tell the measurement owner what happened.
 
 ## 3. Start the companion host (a second PowerShell window)
 
@@ -103,10 +102,10 @@ the entire game.
 
 ## 4. Set up the Pixel
 
-1. Put the Pixel on the local Wi-Fi (the local network).
+1. Put the Pixel on the same LAN as the Windows host (the local Wi-Fi).
 2. Open **Sideband** → menu (≡) → **Preferences / Connectivity**.
 3. Enable the **TCP client interface** ("Connect via TCP"). Two fields:
-   - Host: `your-host-lan-ip`  (that is the Windows host)
+   - Host: the Windows host's LAN IP (`ipconfig` on the Windows host, the 192.168.x.x address)
    - Port: `4242`
    (Menu wording shifts slightly between Sideband versions; you are looking for the
    TCP client with a host field and a port field.)
@@ -131,14 +130,14 @@ the entire game.
   `events.csv` (must contain `COMPANION_MOVE` rows, both `in` and `out`),
   `status.json`, `address.txt`.
 - Note the UTC start and end times of the game.
-- Stamp completion on the ops log (reply to the operator, as always).
+- Stamp completion on the ops log.
 
 ## 7. Put everything back
 
 ```powershell
 # Stop the companion host: Ctrl+C in its window.
 
-# If the operator wants the pre-test interface shape restored:
+# If the measurement owner wants the pre-test interface shape restored:
 cd C:\agents\farcade
 Copy-Item .local\prnsd-config\config.pre-couch-tcp .local\prnsd-config\config -Force
 Get-CimInstance Win32_Process |
@@ -146,7 +145,7 @@ Get-CimInstance Win32_Process |
   ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 Get-Process prnsd -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-ScheduledTask -TaskName Farcade-Responder
-# Verify 4243 is ESTABLISHED again, then stamp the operator with the restore time.
+# Verify 4243 is ESTABLISHED again, then stamp the restore time on the ops log.
 ```
 
 Evidence files and screenshots then go into the repo as
