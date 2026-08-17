@@ -11,6 +11,16 @@ time. Dates are the dates the work landed.
 
 ## [Unreleased]
 
+### Added
+- **Companion games reach the instrument.** `events.csv` gains
+  `COMPANION_MOVE` rows in both directions, correlated from the host's
+  own events, so a companion soak is no longer invisible to the CSV.
+- **`scripts/companion_host.py`.** The live entry point P9 never got: a
+  companion node attached to prnsd (refuses to run standalone), with
+  instrumented CSV, status heartbeat, and periodic announces. Stock
+  Sideband on a phone can now actually reach companion mode; the live
+  Pixel acceptance is the remaining step.
+
 ## [0.3.0] - 2026-08-12
 
 Sprint 3. First version to be tagged; the version had sat at `0.0.1`
