@@ -35,6 +35,7 @@ class Cmd(Enum):
 class Command:
     kind: Cmd
     arg: str = ""
+    difficulty: str = ""
 
 
 # Aliases are compact (lowercase, alphanumerics only), so "connect four",
@@ -92,6 +93,27 @@ def _find_game(text: str, compact: str) -> str | None:
     return ""  # "new game" / "rematch": wants one, did not say which
 
 
+#: Said alongside a game: "play chess easy". Only recognised when a game is
+#: being started, so it can never swallow a move.
+DIFFICULTY_WORDS = {
+    "easy": "easy",
+    "beginner": "easy",
+    "gentle": "easy",
+    "medium": "medium",
+    "normal": "medium",
+    "hard": "hard",
+    "strong": "hard",
+    "brutal": "hard",
+}
+
+
+def _find_difficulty(text: str) -> str:
+    for word in _words(text):
+        if word in DIFFICULTY_WORDS:
+            return DIFFICULTY_WORDS[word]
+    return ""
+
+
 def parse_input(text: str) -> Command:
     """Text from a human -> a Command. Total: never raises, for any input."""
     raw = (text or "").strip()
@@ -110,7 +132,7 @@ def parse_input(text: str) -> Command:
 
     game = _find_game(raw, compact)
     if game is not None:
-        return Command(Cmd.PLAY, game)
+        return Command(Cmd.PLAY, game, _find_difficulty(raw))
 
     return Command(Cmd.TEXT, raw)
 

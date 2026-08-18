@@ -62,7 +62,7 @@ def make_host(tmp_path=None, seed: int = 7):
     host = CompanionHost(
         node,
         storage=tmp_path,
-        bot_factory=lambda game_id: RandomPlayer(seed=seed),
+        bot_factory=lambda game_id, difficulty: RandomPlayer(seed=seed),
     )
     return t, node, host
 
@@ -262,7 +262,7 @@ def test_a_dying_bot_does_not_kill_the_game():
 
     t = StubTransport()
     node = Node(t)
-    host = CompanionHost(node, bot_factory=lambda _gid: Exploding())
+    host = CompanionHost(node, bot_factory=lambda _gid, _diff: Exploding())
     host.on_text(PHONE, "play c4")
     reply = host.on_text(PHONE, "3")
     assert host.games[PHONE].session.log.plies == 2, "fallback never moved"
@@ -281,7 +281,9 @@ def test_the_game_survives_the_node_restarting(tmp_path):
 
     t2 = StubTransport()
     node2 = Node(t2)
-    revived = CompanionHost(node2, storage=tmp_path, bot_factory=lambda g: RandomPlayer(seed=7))
+    revived = CompanionHost(
+        node2, storage=tmp_path, bot_factory=lambda g, _diff: RandomPlayer(seed=7)
+    )
     assert revived.resume_all() == 1
     assert revived.games[PHONE].session.our_hash() == before
     assert revived.games[PHONE].session.log.plies == plies

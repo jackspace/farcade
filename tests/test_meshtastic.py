@@ -277,7 +277,7 @@ def stock_client_rig(tmp_path):
         storage=tmp_path / "host",
         # The real default_bot searches (and shells out to Stockfish for
         # chess). This suite is about the link, not the opponent.
-        bot_factory=lambda _gid: RandomPlayer(seed=11),
+        bot_factory=lambda _gid, _diff: RandomPlayer(seed=11),
         max_reply=NARROW_REPLY,
     )
 

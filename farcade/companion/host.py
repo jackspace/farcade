@@ -73,7 +73,7 @@ class CompanionHost:
         self,
         node: Node,
         storage: Path | None = None,
-        bot_factory: Callable[[str], Player] = default_bot,
+        bot_factory: Callable[[str, str], Player] = default_bot,
         on_event: Callable[[dict], None] | None = None,
         max_reply: int = MAX_REPLY,
     ):
@@ -145,7 +145,7 @@ class CompanionHost:
             # a legal move in any position.
             if cg is not None and not cg.finished and self._is_move(cg, text):
                 return self._text(cg, text)
-            return self._start(peer, cmd.arg)
+            return self._start(peer, cmd.arg, cmd.difficulty)
         if cg is None:
             return no_game_text(GAME_IDS)
         if cmd.kind is Cmd.RULES:
@@ -158,7 +158,7 @@ class CompanionHost:
 
     # -- commands -------------------------------------------------------------
 
-    def _start(self, peer: str, game_id: str) -> str:
+    def _start(self, peer: str, game_id: str, difficulty: str = "") -> str:
         if not game_id:
             return no_game_text(GAME_IDS)
         try:
@@ -168,7 +168,7 @@ class CompanionHost:
 
         gid = secrets.token_hex(8)
         session = Session.new(game, gid, self._log_path(gid))
-        cg = CompanionGame(peer, gid, game_id, session, 0, self._bot(game_id))
+        cg = CompanionGame(peer, gid, game_id, session, 0, self._bot(game_id, difficulty))
         self.games[peer] = cg
         self._persist(cg)
         self._emit("companion_started", peer=peer, gid=gid, game=game_id)
@@ -236,9 +236,9 @@ class CompanionHost:
 
     # -- the bot --------------------------------------------------------------
 
-    def _bot(self, game_id: str) -> Player:
+    def _bot(self, game_id: str, difficulty: str = "") -> Player:
         try:
-            return self.bot_factory(game_id)
+            return self.bot_factory(game_id, difficulty)
         except Exception:
             return RandomPlayer()
 

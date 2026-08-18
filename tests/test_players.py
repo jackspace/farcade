@@ -100,3 +100,29 @@ def test_engine_missing_binary_is_a_clean_error():
     e = UCIEnginePlayer(engine_path="definitely-not-a-real-engine-binary")
     with pytest.raises(EngineError):
         e.choose_move(ChessGame(), ChessGame().initial_state())
+
+
+def test_difficulty_actually_reaches_the_engine():
+    """Before this, `skill_level` was never passed at all: every human met
+    full-strength Stockfish and simply lost. The dial has to arrive."""
+    from farcade.players import DEFAULT_DIFFICULTY, DIFFICULTIES, default_bot
+
+    if not shutil.which("stockfish"):
+        pytest.skip("no stockfish on PATH")
+
+    easy = default_bot("chess", "easy")
+    hard = default_bot("chess", "hard")
+    assert easy.skill_level == DIFFICULTIES["easy"]["skill"]
+    assert hard.skill_level == DIFFICULTIES["hard"]["skill"]
+    assert easy.skill_level < hard.skill_level
+
+    # And the default a human meets is not the strongest setting.
+    assert default_bot("chess").skill_level == DIFFICULTIES[DEFAULT_DIFFICULTY]["skill"]
+    assert default_bot("chess").skill_level < DIFFICULTIES["hard"]["skill"]
+
+
+def test_difficulty_reaches_the_minimax_games_too():
+    from farcade.players import DIFFICULTIES, default_bot
+
+    for name in ("easy", "medium", "hard"):
+        assert default_bot("c4", name).depth == DIFFICULTIES[name]["depth"]
