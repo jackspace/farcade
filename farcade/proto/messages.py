@@ -73,11 +73,32 @@ class Msg:
 # ---------------------------------------------------------------------------
 
 
+#: The ceiling a length-prefixed blob can carry. Published because callers
+#: that build free text (chat notes) have to respect it: over-length is a
+#: WireError at encode time, which is far from where the text came from.
+MAX_BLOB_BYTES = 255
+
+
 def _lp(data: bytes) -> bytes:
     """Length-prefixed blob, one byte of length (all our blobs are tiny)."""
-    if len(data) > 255:
+    if len(data) > MAX_BLOB_BYTES:
         raise WireError(f"blob too long: {len(data)}")
     return bytes([len(data)]) + data
+
+
+def clamp_note(text: str, limit: int | None = None) -> str:
+    """Fit free text under the wire ceiling, measured in bytes.
+
+    Defaults to the budget ceiling rather than the codec's hard 255: a note
+    can be encodable and still be too fat for a constrained link, which is
+    the whole point of BUDGET. Characters are the wrong unit either way -
+    one em-dash is three bytes, so a short-looking sentence can overflow.
+    """
+    limit = MAX_NOTE_BYTES if limit is None else limit
+    encoded = text.encode()
+    if len(encoded) <= limit:
+        return text
+    return encoded[: limit - 3].decode(errors="ignore").rstrip() + "..."
 
 
 class _Reader:
@@ -290,3 +311,8 @@ def chunk_sync_state(gid: str, ply: int, state_hash: bytes, moves: list[bytes]) 
         )
         for i, g in enumerate(groups)
     ]
+
+
+#: The longest chat note that keeps a CHAT inside BUDGET. Derived from the
+#: codec rather than written down, so framing changes cannot leave it stale.
+MAX_NOTE_BYTES = BUDGET - len(encode_binary(Msg(MsgType.CHAT, "0" * 16, 0, note="")))

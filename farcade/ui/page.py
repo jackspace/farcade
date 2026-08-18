@@ -53,6 +53,7 @@ PAGE_HTML = r"""<!doctype html>
       <button id="drawoffer">offer draw</button>
       <button id="drawaccept" style="display:none">accept draw</button>
       <button id="nudgeb">nudge</button>
+      <button id="newgame">new game</button>
     </p>
   </div>
 </div>
@@ -235,6 +236,15 @@ document.getElementById("drawaccept").onclick = () =>
   j(`/games/${gid}/draw-accept`, post({})).then(refresh);
 document.getElementById("nudgeb").onclick = () =>
   j(`/games/${gid}/nudge`, post({})).then(() => flash("nudged"));
+// A rematch: same opponent, same game. The peer address comes off the game
+// being viewed, so nobody has to paste 32 hex characters to play again.
+document.getElementById("newgame").onclick = async () => {
+  if (!view) return;
+  const started = await j("/invite", post({peer: view.peer, game: view.game}));
+  gid = started.gid; sel = null;
+  await loadGames(); await refresh();
+  flash("new game started");
+};
 
 setInterval(async () => {
   const evs = await j(`/events?since=${lastEvent}`).catch(() => []);

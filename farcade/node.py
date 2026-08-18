@@ -13,6 +13,7 @@ from pathlib import Path
 from farcade.games import by_id
 from farcade.net import Transport
 from farcade.players import NullVoice, Player, Voice
+from farcade.proto.messages import clamp_note
 from farcade.proto.peer import GamePeer
 
 
@@ -61,13 +62,23 @@ class Node:
             "last_move": e.get("ply"),
             "chat": "",
         }
-        text = self.voice.comment(ctx)
-        if text:
-            self.send_chat(e["gid"], text)
+        try:
+            text = self.voice.comment(ctx)
+            if text:
+                self.send_chat(e["gid"], text)
+        except Exception:
+            # The header above is a promise: a voice must never take the game
+            # down with it. comment() guards its own failures, but everything
+            # after it - encoding, transport - is on this path too.
+            pass
 
     # -- actions used by the local API -------------------------------------
 
     def send_chat(self, gid: str, text: str) -> None:
+        # Every chat source funnels through here - UI, TUI, voice - and the
+        # wire's note field is one length-prefixed byte. Clamp at this seam
+        # rather than trusting each caller to know the ceiling.
+        text = clamp_note(text)
         self.peer.chat(gid, text)
         with self._lock:
             self.chat_log.setdefault(gid, []).append(

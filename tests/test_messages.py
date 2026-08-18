@@ -5,11 +5,14 @@ import pytest
 
 from farcade.proto.messages import (
     BUDGET,
+    MAX_BLOB_BYTES,
+    MAX_NOTE_BYTES,
     Msg,
     MsgType,
     RejectReason,
     WireError,
     chunk_sync_state,
+    clamp_note,
     decode_binary,
     decode_text,
     encode_binary,
@@ -127,3 +130,23 @@ def test_an_80_ply_chess_log_chunks_to_two_parts():
     assert len(parts) == 2
     for p in parts:
         assert len(encode_binary(p)) <= BUDGET
+
+
+def test_clamp_note_keeps_chat_inside_budget_counting_bytes():
+    """A 295-byte voice comment killed a live node: the note reached
+    encode_binary unclamped and WireError came out. Clamping to the codec's
+    255 would stop the crash and still breach BUDGET, so clamp_note aims at
+    the budget ceiling. Bytes, not characters - an em-dash is three."""
+    assert clamp_note("short") == "short"
+    assert MAX_NOTE_BYTES < MAX_BLOB_BYTES  # the budget binds first
+
+    plain = clamp_note("x" * 400)
+    assert len(plain.encode()) <= MAX_NOTE_BYTES and plain.endswith("...")
+
+    wide = clamp_note("—" * 200)  # 600 bytes, only 200 characters
+    assert len(wide.encode()) <= MAX_NOTE_BYTES
+    assert wide.encode().decode()  # never split a character in half
+
+    for text in ("y" * 400, "—" * 200, "ok"):
+        msg = Msg(MsgType.CHAT, GID, 0, note=clamp_note(text))
+        assert len(encode_binary(msg)) <= BUDGET
