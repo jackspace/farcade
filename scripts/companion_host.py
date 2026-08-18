@@ -93,6 +93,12 @@ def main() -> int:
     # Companion events go through the node's funnel so the instrument sees
     # one ordered stream: protocol events and companion events interleaved.
     host = CompanionHost(node, storage=workdir / "companion", on_event=node._on_event)
+    # The phone keeps nothing, so a restart here is the difference between a
+    # conversation continuing and a game vanishing mid-move. (Node resumes the
+    # protocol games itself; these are the conversational ones.)
+    resumed = host.resume_all()
+    if resumed:
+        print(f"resumed {resumed} companion game(s)", flush=True)
 
     started = time.time()
     last_announce = 0.0

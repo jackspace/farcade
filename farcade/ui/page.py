@@ -85,6 +85,10 @@ async function loadGames() {
     btn.onclick = () => { gid = g.gid; sel = null; refresh(); };
     div.appendChild(btn);
   }
+  // Correspondence pace means the tab is usually in the background, so the
+  // title is where "it is your move" actually gets noticed.
+  const waiting = games.some(g => g.our_turn && g.status === "playing");
+  document.title = waiting ? "● your move — Farcade" : "Farcade";
   if (!gid && games.length) { gid = games[0].gid; refresh(); }
 }
 async function refresh() {

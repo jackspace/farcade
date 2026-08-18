@@ -1,0 +1,37 @@
+# The gate, in CI. `scripts/gate.sh` says "CI will run exactly this", so this
+# workflow runs that script and nothing else: one definition of green, shared
+# by the bench and by GitHub.
+name: gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor and the current release. pyproject claims >=3.10, and an
+        # untested claim is just a hope.
+        python-version: ["3.10", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # The chess engine tests are only meaningful with a real engine present;
+      # without it the bot silently falls back to random moves.
+      - name: Install stockfish
+        run: sudo apt-get update && sudo apt-get install -y stockfish
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Gate
+        run: bash scripts/gate.sh

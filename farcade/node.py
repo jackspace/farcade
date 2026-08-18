@@ -31,6 +31,11 @@ class Node:
         self.chat_log: dict[str, list[dict]] = {}
         self._lock = threading.RLock()
         self.peer = GamePeer(transport, by_id, storage=storage, on_event=self._on_event)
+        # Persistence is only half a feature if nothing reads it back. Every
+        # entry point built a peer, wrote its games faithfully, and then
+        # started empty - so a restart mid-game silently abandoned it. Resume
+        # here, at the one place they all go through.
+        self.peer.resume_all()
 
     # -- events ----------------------------------------------------------
 

@@ -11,7 +11,32 @@ time. Dates are the dates the work landed.
 
 ## [Unreleased]
 
+### Fixed
+- **A restart no longer abandons the game in progress.** `resume_all()` was
+  built, tested, and then called by nothing that ships: every entry point
+  created a peer, wrote its games faithfully, and started empty. `Node` now
+  resumes at construction, and the companion host resumes its conversational
+  games too. Found by restarting a live seat mid-game.
+- **The companion plays the protocol games it accepts.** Its own docstring
+  promised protocol peers worked through the same address, but the `Node` it
+  built had no auto player, so `tick()` returned on its first line: a peer
+  could invite the host, receive the accept, and wait forever. Only the
+  conversational path ever had a bot.
+- **A voice comment can no longer kill a node.** A 295-byte comment reached
+  the encoder unclamped and the wire's one-byte length prefix raised
+  `WireError`, unwinding the process mid-game. Chat is now clamped at the one
+  seam every source funnels through, measured in bytes against a ceiling
+  derived from `BUDGET` and the codec's own framing, and the voice path
+  catches what it can still throw.
+
 ### Added
+- **CI.** GitHub Actions runs `scripts/gate.sh` — the same gate as the bench —
+  on push and pull request, against Python 3.10 and 3.13 with a real chess
+  engine installed.
+- **A new game button** in the web UI: a rematch against the same opponent, so
+  nobody retypes a 32-character address to play again.
+- **"Your move" in the browser title**, because at correspondence pace the tab
+  is usually in the background.
 - **Companion games reach the instrument.** `events.csv` gains
   `COMPANION_MOVE` rows in both directions, correlated from the host's
   own events, so a companion soak is no longer invisible to the CSV.

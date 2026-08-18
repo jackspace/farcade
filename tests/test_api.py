@@ -154,3 +154,22 @@ def test_a_talkative_voice_cannot_kill_the_node(rig):
     spoken = [c for c in httpx.get(f"{base}/games/{gid}").json()["chat"] if c["who"] == "us"]
     assert spoken, "the talkative voice should have said something"
     assert all(len(c["text"].encode()) <= MAX_NOTE_BYTES for c in spoken)
+
+
+def test_a_restarted_node_keeps_its_games(rig, tmp_path):
+    """Persistence was write-only where it counted: every entry point built a
+    Node, wrote its games faithfully, and then started empty, so restarting
+    mid-game silently abandoned it. A fresh Node on the same storage has to
+    pick the game back up without being asked."""
+    hub, you, bot, base = rig
+    gid = httpx.post(f"{base}/invite", json={"peer": "bot", "game": "c4"}).json()["gid"]
+    hub.pump()
+    view = httpx.get(f"{base}/games/{gid}").json()
+    httpx.post(f"{base}/games/{gid}/move", json={"move": view["model"]["legal"][0]})
+    hub.pump()
+
+    restarted = Node(hub.endpoint("you-again"), storage=tmp_path / "you")
+
+    assert gid in restarted.peer.games, "a restart lost the game"
+    assert restarted.peer.games[gid].session.log.plies == 1
+    assert restarted.peer.games[gid].session.our_hash() == you.peer.games[gid].session.our_hash()

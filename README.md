@@ -27,19 +27,24 @@ Games, players, voices and transports are all plugins behind narrow ports; the s
 knows none of them.
 
 - **Spec**: [docs/spec.md](docs/spec.md)
-- **Sprint 1 plan and work breakdown**: [docs/sprint-1.md](docs/sprint-1.md)
+- **Plans and work breakdowns**: [docs/sprint-1.md](docs/sprint-1.md), [docs/sprints-2-4.md](docs/sprints-2-4.md)
 - **Deploying two peers over Reticulum/prnsd**: [docs/deploy-two-peers.md](docs/deploy-two-peers.md)
 - **Why prnsd owns port 37428, with evidence**: [docs/topology-prnsd.md](docs/topology-prnsd.md)
 
 ## Status
 
-Sprint 1 nearly complete (2026-08-09): P0–P6 landed — two game plugins, adversarial channel
-harness (1000 lossy games, zero desyncs), LXMF transport over prnsd proven cross-host
-(the Windows host ↔ Pi, engine chess to checkmate with identical hashes both sides), instrumentation
-CSV + metrics + paced soak runner. A 24 h Windows ↔ Pi soak (P6.4) is running. Interfaces are
-not stable yet.
+Latest release **0.3.0**; see [CHANGELOG.md](CHANGELOG.md) for what landed when.
 
-## Quick start (will firm up as sprint 1 lands)
+Three games (chess, connect four, reversi) with a minimax opponent, an adversarial channel
+harness, and an LXMF transport over Reticulum proven cross-host — engine chess to checkmate with
+identical hashes on both sides, then a 24-hour soak that turned into two concurrent ones: 243
+games, zero duplicates, zero gaps, zero desyncs. Since then: a serverless lobby (nodes announce a
+signed card and hear each other, no registry to run), a Meshtastic transport, and a companion
+mode that lets someone play by typing into a stock client with nothing installed.
+
+Interfaces are not stable yet, and the companion mode's live phone acceptance is still open.
+
+## Quick start
 
 ```bash
 python -m venv .venv && . .venv/bin/activate   # or .venv\Scripts\activate on Windows
