@@ -104,6 +104,42 @@ class NotAttachedToSharedInstance(RuntimeError):
     stack that talks to nobody, measures nothing, and looks like it works."""
 
 
+def attach_rns(
+    configdir: str | Path,
+    instance_config: str | Path | None = None,
+    auto_attach: bool = True,
+    require_attached: bool = True,
+):
+    """Bring up RNS attached to the shared instance, or say why not.
+
+    Shared by the single-seat transport and the hub, because "how do I find
+    the daemon" is the same question whether one player is asking or twelve.
+    """
+    # Seed our client config with the daemon's RPC key before RNS reads it.
+    # Without this every caller had to run `farcade rns-key` by hand and pass
+    # the result in, which is most of what "not out of the box" meant.
+    if instance_config is None and auto_attach:
+        instance_config = default_instance_config()
+    if instance_config is not None:
+        try:
+            ensure_rpc_key(configdir, rns_rpc_key(instance_config))
+        except FileNotFoundError:
+            # No daemon has run there. Attaching fails below and says so with
+            # the full story, which beats a FileNotFoundError here.
+            pass
+
+    rns = RNS.Reticulum(configdir=str(configdir))
+    if require_attached and not rns.is_connected_to_shared_instance:
+        raise NotAttachedToSharedInstance(
+            "no shared Reticulum instance to attach to, so this process would "
+            "become the instance owner and talk to nobody. Start prnsd (or "
+            "rnsd) first. If one is already running, its config is somewhere "
+            "this could not find: point FARCADE_RNS_CONFIG at it, or pass "
+            "instance_config."
+        )
+    return rns
+
+
 class LxmfTransport:
     trust_level = TrustLevel.CRYPTOGRAPHIC
 
@@ -125,29 +161,8 @@ class LxmfTransport:
         self._inbound_lock = threading.Lock()
         self.receive_cb: Callable[[str, bytes], None] | None = None
 
-        # Seed our client config with the daemon's RPC key before RNS reads it.
-        # Without this every caller had to run `farcade rns-key` by hand and
-        # pass the result in, which is most of what "not out of the box" meant.
-        if instance_config is None and auto_attach:
-            instance_config = default_instance_config()
-        if instance_config is not None:
-            try:
-                ensure_rpc_key(configdir, rns_rpc_key(instance_config))
-            except FileNotFoundError:
-                # No daemon has run there. Attaching will fail below and say so
-                # with the full story, which beats a FileNotFoundError here.
-                pass
-
-        self.rns = RNS.Reticulum(configdir=str(configdir))
+        self.rns = attach_rns(configdir, instance_config, auto_attach, require_attached)
         self.attached = self.rns.is_connected_to_shared_instance
-        if require_attached and not self.attached:
-            raise NotAttachedToSharedInstance(
-                "no shared Reticulum instance to attach to, so this process "
-                "would become the instance owner and talk to nobody. Start "
-                "prnsd (or rnsd) first. If one is already running, its config "
-                "is somewhere this could not find: point FARCADE_RNS_CONFIG at "
-                "it, or pass instance_config."
-            )
 
         identity_path = self.storagedir / "identity"
         if identity_path.exists():
