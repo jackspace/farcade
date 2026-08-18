@@ -12,6 +12,7 @@ import shutil
 import sys
 import threading
 import time
+from pathlib import Path
 
 from farcade import __version__
 
@@ -92,8 +93,79 @@ def cmd_rns_key(args) -> int:
     try:
         print(rns_rpc_key(args.prnsd_config_dir))
     except FileNotFoundError:
-        print("no storage/transport_identity there - has prnsd run with that --config?")
+        print("no storage/transport_identity there - has a daemon run with that --config?")
         return 1
+    return 0
+
+
+SHARED_INSTANCE_PORT = 37428  # RNS.Reticulum.local_interface_port default
+
+
+def shared_instance_listening(port: int = SHARED_INSTANCE_PORT) -> bool:
+    """Is something accepting connections on the shared-instance port?
+
+    Deliberately does not try to name the implementation. From outside the
+    socket, prnsd and rnsd are indistinguishable, and a doctor that guesses
+    is worse than one that reports what it actually checked.
+    """
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(0.5)
+        return probe.connect_ex(("127.0.0.1", port)) == 0
+
+
+def cmd_doctor(args) -> int:
+    """Say what is true about this machine, and what to do about what is not."""
+    import shutil
+
+    from farcade.net.lxmf import default_instance_config, rns_rpc_key
+
+    problems = []
+
+    listening = shared_instance_listening(args.port)
+    print(f"[{'ok ' if listening else 'FIX'}] shared instance on 127.0.0.1:{args.port}")
+    if not listening:
+        problems.append(
+            "Nothing is listening on the shared-instance port. Start prnsd (or rnsd)\n"
+            "      first - without one, Farcade would become the instance owner and\n"
+            "      talk to nobody."
+        )
+
+    config = Path(args.instance_config) if args.instance_config else default_instance_config()
+    # Only claim ok for a directory actually seen on disk: an explicit
+    # --instance-config is a claim by the caller, not a finding.
+    config_found = config is not None and config.is_dir()
+    print(f"[{'ok ' if config_found else 'FIX'}] instance config: {config or 'not found'}")
+    if not config_found:
+        where = f"No instance config at {config}." if config else "No instance config found."
+        problems.append(
+            f"{where}\n"
+            "      Point FARCADE_RNS_CONFIG at the daemon's config directory,\n"
+            "      or pass --instance-config."
+        )
+    else:
+        try:
+            rns_rpc_key(config)
+            print("[ok ] rpc key derivable from its transport identity")
+        except FileNotFoundError:
+            print("[FIX] rpc key: no storage/transport_identity in that config")
+            problems.append(
+                f"No daemon has ever run in {config}. Start it once so it writes\n"
+                "      its transport identity, then run this again."
+            )
+
+    engine = shutil.which("stockfish")
+    print(f"[{'ok ' if engine else '-  '}] chess engine: {engine or 'not on PATH'}")
+    if not engine:
+        print("      (optional: without it the chess bot falls back to random moves)")
+
+    if problems:
+        print("\nWhat to fix:")
+        for n, problem in enumerate(problems, 1):
+            print(f"  {n}. {problem}")
+        return 1
+    print("\nReady to play.")
     return 0
 
 
@@ -113,9 +185,14 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("url", nargs="?", default="http://127.0.0.1:8765")
     t.set_defaults(fn=cmd_tui)
 
-    k = sub.add_parser("rns-key", help="print prnsd's shared-instance RPC key")
+    k = sub.add_parser("rns-key", help="print a shared instance's RPC key")
     k.add_argument("prnsd_config_dir")
     k.set_defaults(fn=cmd_rns_key)
+
+    doc = sub.add_parser("doctor", help="check this machine is ready to play")
+    doc.add_argument("--port", type=int, default=SHARED_INSTANCE_PORT)
+    doc.add_argument("--instance-config", default=None)
+    doc.set_defaults(fn=cmd_doctor)
 
     args = p.parse_args(sys.argv[1:] if argv is None else argv)
     if not getattr(args, "fn", None):
