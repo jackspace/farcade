@@ -98,6 +98,54 @@ def cmd_rns_key(args) -> int:
     return 0
 
 
+def cmd_hub(args) -> int:
+    """Stand up a hub: one Reticulum attachment, many players, one board.
+
+    This is the shape a family, a club or a league runs. It binds the LAN by
+    default, which is the whole point - other people have to be able to reach
+    it - and that is exactly why every route wants a session token. Each
+    player gets a claim link, printed once here; handing one out is how a
+    person becomes a player rather than whoever opened the page.
+    """
+    from farcade.net.hub import LxmfHub, PlayerNameError
+    from farcade.roster import Roster
+    from farcade.ui.server import LocalAPI
+
+    storage = Path(args.storage).expanduser()
+    hub = LxmfHub(
+        configdir=storage / "rns",
+        storagedir=storage,
+        instance_config=args.instance_config,
+    )
+    roster = Roster(hub)
+    for name in [n.strip() for n in args.players.split(",") if n.strip()]:
+        try:
+            roster.node_for_player(name)
+        except PlayerNameError as e:
+            print(f"skipping: {e}")
+    if not roster.player_names():
+        print("no players yet - pass --players alice,bob (they are remembered after that)")
+        return 1
+
+    api = LocalAPI(roster, host=args.host, port=args.port)
+    api.start()
+    print(f"hub on http://{args.host}:{api.port}  (attached: {hub.attached})")
+    print("\nHand each person their own link. It is their seat, and it is a secret:\n")
+    for name in roster.player_names():
+        code = roster.claim_code(name)
+        print(f"  {name:<16} http://{args.host}:{api.port}/?player={name}&claim={code}")
+        print(f"  {'':<16} {roster.node_for_player(name).peer.transport.address}")
+
+    stop = threading.Event()
+    try:
+        while not stop.is_set():
+            hub.pump()
+            time.sleep(0.3)
+    except KeyboardInterrupt:
+        api.stop()
+    return 0
+
+
 SHARED_INSTANCE_PORT = 37428  # RNS.Reticulum.local_interface_port default
 
 
@@ -188,6 +236,14 @@ def main(argv: list[str] | None = None) -> int:
     k = sub.add_parser("rns-key", help="print a shared instance's RPC key")
     k.add_argument("prnsd_config_dir")
     k.set_defaults(fn=cmd_rns_key)
+
+    h = sub.add_parser("hub", help="run a hub: several players, one board")
+    h.add_argument("--players", default="", help="comma-separated names to create or resume")
+    h.add_argument("--storage", default="~/.farcade-hub")
+    h.add_argument("--host", default="0.0.0.0")
+    h.add_argument("--port", type=int, default=8765)
+    h.add_argument("--instance-config", default=None)
+    h.set_defaults(fn=cmd_hub)
 
     doc = sub.add_parser("doctor", help="check this machine is ready to play")
     doc.add_argument("--port", type=int, default=SHARED_INSTANCE_PORT)

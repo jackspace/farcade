@@ -36,7 +36,7 @@ PAGE_HTML = r"""<!doctype html>
 </style>
 </head>
 <body>
-<h1>Farcade <small>an arcade at a distance</small></h1>
+<h1>Farcade <small>an arcade at a distance</small> <small id="seat"></small></h1>
 <div id="games"></div>
 <div id="banner" class="banner" style="display:none"></div>
 <div class="wrap">
@@ -61,8 +61,14 @@ PAGE_HTML = r"""<!doctype html>
 const PIECES = {P:"♙",N:"♘",B:"♗",R:"♖",Q:"♕",K:"♔",
                 p:"♟",n:"♞",b:"♝",r:"♜",q:"♛",k:"♚"};
 let gid = null, view = null, sel = null, lastEvent = 0;
+// Who is asking. A hub issues one of these per player; a personal seat has
+// no players, /whoami answers null, and nothing below changes.
+const TOKEN_KEY = "farcade_token";
+let token = localStorage.getItem(TOKEN_KEY) || "";
 
 async function j(url, opts) {
+  opts = opts || {};
+  if (token) opts.headers = Object.assign({"X-Farcade-Token": token}, opts.headers || {});
   const r = await fetch(url, opts);
   const data = await r.json().catch(() => ({}));
   if (!r.ok) { flash(data.error || r.status); throw new Error(data.error); }
@@ -259,7 +265,27 @@ setInterval(async () => {
       document.getElementById("drawaccept").style.display = "inline";
   }
 }, 2000);
-loadGames();
+// A hub hands out one claim link per player. Spending it here, once, is what
+// turns "a browser on the network" into a named person, and the code leaves
+// the address bar straight after so it is not sitting in anyone's history.
+async function signIn() {
+  const q = new URLSearchParams(location.search);
+  const player = q.get("player"), code = q.get("claim");
+  if (player && code) {
+    try {
+      const got = await j("/auth/claim", post({player: player, code: code}));
+      token = got.token;
+      localStorage.setItem(TOKEN_KEY, token);
+    } catch (e) { /* flash() already said so */ }
+    history.replaceState(null, "", location.pathname);
+  }
+  const who = await j("/whoami").catch(() => ({}));
+  const seat = document.getElementById("seat");
+  if (who.player) seat.textContent = who.player;
+  else if (token) seat.textContent = "seat expired - use your claim link again";
+  return who.player;
+}
+signIn().then(loadGames);
 </script>
 </body>
 </html>
