@@ -35,10 +35,13 @@ def main() -> int:
 
         ensure_rpc_key(workdir / "rnsconfig", arg_after("--rpc-key", None))
 
+    # --instance-config points at the daemon's config dir; with neither flag
+    # the transport finds the running instance itself.
     lx = LxmfTransport(
         configdir=workdir / "rnsconfig",
         storagedir=workdir / "storage",
         display_name="farcade-web-seat",
+        instance_config=arg_after("--instance-config", None),
     )
     (workdir / "address.txt").write_text(lx.address, encoding="utf-8")
     print(f"web seat address: {lx.address}  attached={lx.attached}", flush=True)

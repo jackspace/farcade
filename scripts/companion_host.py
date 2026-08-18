@@ -7,6 +7,10 @@ the wire over from GamePeer, so protocol peers still work through the
 same address while humans get conversational games.
 
     companion_host.py <workdir> [--max-hours H] [--rpc-key KEY]
+                      [--instance-config DIR]
+
+With neither key flag the transport finds the running shared instance on
+its own, which is the usual case.
 
 Writes address.txt on start, an instrumented events.csv (companion rows
 included), and a status.json heartbeat the watcher can poll.
@@ -24,6 +28,10 @@ from farcade.node import Node
 from farcade.players import RandomPlayer, default_bot
 
 ANNOUNCE_EVERY_S = 1800
+
+
+def arg_after(flag: str, default: str | None) -> str | None:
+    return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
 
 
 class ProtocolBot:
@@ -70,6 +78,7 @@ def main() -> int:
         configdir=workdir / "rnsconfig",
         storagedir=workdir / "storage",
         display_name="farcade-companion",
+        instance_config=arg_after("--instance-config", None),
     )
     (workdir / "address.txt").write_text(lx.address, encoding="utf-8")
     print(f"companion address: {lx.address}  attached={lx.attached}", flush=True)

@@ -32,14 +32,47 @@ import RNS
 from farcade.net import TrustLevel
 
 
-def rns_rpc_key(prnsd_config_dir: str | Path) -> str:
-    """prnsd's shared-instance RPC key: sha256 of its raw transport
-    identity bytes (see docs/topology-prnsd.md). Raises FileNotFoundError
-    when the daemon has never run in that config dir."""
+def rns_rpc_key(instance_config_dir: str | Path) -> str:
+    """A shared instance's RPC key: sha256 of its transport identity.
+
+    This is Reticulum's own scheme rather than a prnsd one, which is why the
+    same helper serves either daemon: RNS derives the key as
+    ``full_hash(transport_identity.get_private_key())``, and ``Identity.to_file``
+    writes exactly those private key bytes, so hashing the file and hashing the
+    loaded key are the same number. `test_rpc_key_matches_rns_own_scheme` pins
+    that equivalence, so an upstream change cannot break it quietly.
+
+    Raises FileNotFoundError when no daemon has ever run in that config dir.
+    """
     import hashlib
 
-    data = (Path(prnsd_config_dir) / "storage" / "transport_identity").read_bytes()
+    data = (Path(instance_config_dir) / "storage" / "transport_identity").read_bytes()
     return hashlib.sha256(data).hexdigest()
+
+
+def default_instance_config() -> Path | None:
+    """The config dir of the shared instance this machine is probably running.
+
+    Precedence: an explicit ``FARCADE_RNS_CONFIG``, then Reticulum's default
+    ``~/.reticulum``. Returns None when neither holds a transport identity,
+    meaning no daemon has ever run there — the caller should say so plainly
+    instead of guessing further.
+
+    Deliberately does not try to identify *which* implementation is running.
+    prnsd and rnsd store the key identically, and the honest test of a guess
+    is whether attaching works.
+    """
+    import os
+
+    candidates = []
+    env = os.environ.get("FARCADE_RNS_CONFIG")
+    if env:
+        candidates.append(Path(env))
+    candidates.append(Path.home() / ".reticulum")
+    for candidate in candidates:
+        if (candidate / "storage" / "transport_identity").exists():
+            return candidate
+    return None
 
 
 def ensure_rpc_key(configdir: str | Path, key_hex: str) -> None:
@@ -64,10 +97,11 @@ def ensure_rpc_key(configdir: str | Path, key_hex: str) -> None:
 
 
 class NotAttachedToSharedInstance(RuntimeError):
-    """This process became the RNS instance owner: prnsd was not there.
+    """This process became the RNS instance owner instead of attaching.
 
-    Playing on a stock-RNS fallback would silently invalidate every
-    claim the soak makes about the Rust stack, so it is an error."""
+    Not a judgement about which implementation is running - prnsd and rnsd
+    are both fine to attach to. The failure is becoming an island: a private
+    stack that talks to nobody, measures nothing, and looks like it works."""
 
 
 class LxmfTransport:
@@ -80,6 +114,8 @@ class LxmfTransport:
         display_name: str = "farcade",
         require_attached: bool = True,
         path_timeout: float = 10.0,
+        instance_config: str | Path | None = None,
+        auto_attach: bool = True,
     ):
         self.storagedir = Path(storagedir)
         self.storagedir.mkdir(parents=True, exist_ok=True)
@@ -89,11 +125,28 @@ class LxmfTransport:
         self._inbound_lock = threading.Lock()
         self.receive_cb: Callable[[str, bytes], None] | None = None
 
+        # Seed our client config with the daemon's RPC key before RNS reads it.
+        # Without this every caller had to run `farcade rns-key` by hand and
+        # pass the result in, which is most of what "not out of the box" meant.
+        if instance_config is None and auto_attach:
+            instance_config = default_instance_config()
+        if instance_config is not None:
+            try:
+                ensure_rpc_key(configdir, rns_rpc_key(instance_config))
+            except FileNotFoundError:
+                # No daemon has run there. Attaching will fail below and say so
+                # with the full story, which beats a FileNotFoundError here.
+                pass
+
         self.rns = RNS.Reticulum(configdir=str(configdir))
         self.attached = self.rns.is_connected_to_shared_instance
         if require_attached and not self.attached:
             raise NotAttachedToSharedInstance(
-                "this RNS became the shared-instance owner; start prnsd first"
+                "no shared Reticulum instance to attach to, so this process "
+                "would become the instance owner and talk to nobody. Start "
+                "prnsd (or rnsd) first. If one is already running, its config "
+                "is somewhere this could not find: point FARCADE_RNS_CONFIG at "
+                "it, or pass instance_config."
             )
 
         identity_path = self.storagedir / "identity"

@@ -64,3 +64,37 @@ def test_ensure_is_idempotent(tmp_path):
     before = (cfg / "config").read_text()
     ensure_rpc_key(cfg, KEY)
     assert (cfg / "config").read_text() == before
+
+
+def test_rpc_key_matches_rns_own_scheme(tmp_path):
+    """The claim that Farcade attaches to *any* RNS stack rests on this: our
+    helper is not a prnsd convention, it is Reticulum's own derivation.
+
+    RNS computes the key as full_hash(transport_identity.get_private_key()),
+    and Identity.to_file writes exactly those private key bytes - so hashing
+    the file equals hashing the loaded key. If upstream ever changes either
+    half, this fails instead of the attach silently breaking in the field.
+    """
+    import RNS
+
+    identity = RNS.Identity()
+    storage = tmp_path / "instance" / "storage"
+    storage.mkdir(parents=True)
+    identity.to_file(str(storage / "transport_identity"))
+
+    assert (
+        rns_rpc_key(tmp_path / "instance")
+        == RNS.Identity.full_hash(identity.get_private_key()).hex()
+    )
+
+
+def test_default_instance_config_prefers_the_env_var_and_needs_an_identity(tmp_path, monkeypatch):
+    from farcade.net.lxmf import default_instance_config
+
+    monkeypatch.setenv("FARCADE_RNS_CONFIG", str(tmp_path / "nothing-here"))
+    monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path / "no-home")
+    assert default_instance_config() is None, "a dir with no daemon must not be claimed"
+
+    cfgdir, _ = fake_prnsd(tmp_path)
+    monkeypatch.setenv("FARCADE_RNS_CONFIG", str(cfgdir))
+    assert default_instance_config() == cfgdir
