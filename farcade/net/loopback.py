@@ -1,7 +1,7 @@
 """In-process loopback transport: two endpoints, one queue, no chaos.
 
 For demo mode and UI development. The adversarial variant lives in the
-test suite on purpose — chaos is an instrument, not a feature.
+test suite on purpose. Chaos is an instrument, not a feature.
 """
 
 from __future__ import annotations

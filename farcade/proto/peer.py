@@ -142,7 +142,7 @@ class GamePeer:
         elif entry.status == "finished" and entry.last_outbound is not None:
             # The game ended on OUR move. If that message died in flight,
             # the peer is stuck at ply N-1 waiting forever while we sit
-            # smugly on the result — the harness caught exactly this stall.
+            # smugly on the result. The harness caught exactly this stall.
             # Retransmitting the final MOVE is idempotent and heals it.
             self._send(entry, entry.last_outbound)
 

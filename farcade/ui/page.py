@@ -2,7 +2,7 @@
 the local API. Click a piece, click a square; legal targets highlight.
 Connect four gets column buttons. Chat rides alongside.
 
-Vanilla JS + 2 s polling — correspondence pace makes push unnecessary,
+Vanilla JS + 2 s polling, because correspondence pace makes push unnecessary,
 and this works in every browser on the LAN including the S24.
 """
 
@@ -94,7 +94,7 @@ async function loadGames() {
   // Correspondence pace means the tab is usually in the background, so the
   // title is where "it is your move" actually gets noticed.
   const waiting = games.some(g => g.our_turn && g.status === "playing");
-  document.title = waiting ? "● your move — Farcade" : "Farcade";
+  document.title = waiting ? "● your move · Farcade" : "Farcade";
   if (!gid && games.length) { gid = games[0].gid; refresh(); }
 }
 async function refresh() {

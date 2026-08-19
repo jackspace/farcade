@@ -1,7 +1,7 @@
 """P6.2: turn the event CSV into numbers a human can judge a soak by.
 
 Pure function of the CSV; no live state. The test feeds it a synthetic
-log with known injected faults and expects exact values back — a report
+log with known injected faults and expects exact values back, a report
 that cannot reproduce known numbers is not a report.
 """
 

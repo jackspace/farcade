@@ -11,7 +11,94 @@ time. Dates are the dates the work landed.
 
 ## [Unreleased]
 
+The next release is **0.4.0**, not 0.3.1: `bot_factory` gained a difficulty
+argument and its callers moved with it, which is a breaking change to a public
+contract, and 0.y.z puts those in the minor.
+
+### Added
+- **A hub where each player is a person.** `farcade hub` stands up one
+  attachment and one router with a Reticulum identity, a game store and a
+  `Node` per player, so two people in one house are two people to everyone they
+  play rather than one shared address. Inbound is demultiplexed by the
+  destination the message arrived at; anything addressed to a destination this
+  hub does not serve is dropped rather than handed to whoever is around, because
+  guessing there would be forgery and not routing. Player identities persist and
+  re-register on startup, so a restart does not leave real people unreachable at
+  addresses they already gave out.
+- **A player is a Reticulum identity, not a password.** Proving you are a player
+  means signing a hub-issued challenge with the key that player holds - the same
+  primitive that authenticates everything else on the network, rather than a
+  second credential system beside it. The challenge is bound to the player and to
+  Farcade, so a signature harvested from somewhere else is not an answer, and it
+  is consumed whether or not the signature was good, so a captured nonce buys one
+  attempt rather than unlimited guesses.
+- **Hub custody and self custody, on one verification path.** Hub custody is the
+  family and club case, where a nine year old should not have to manage a
+  keypair: the browser is authorised by a claim code and the hub answers its own
+  challenge with the key it holds. Self custody is the player holding their own
+  key, which is what a league spanning hubs needs, since a hub-held signature
+  cannot be proof against the hub itself. Both walk the identical path, so the
+  second is an upgrade rather than a migration. **The claim code is a bearer
+  secret**, and exactly as strong as the hub's custody of the key already was.
+- **Difficulty levels.** `easy` / `medium` / `hard`, mapped to Stockfish's own
+  0-20 skill scale and to minimax depth for the games with no engine. Companion
+  mode understands them in passing - "play chess easy" and a few synonyms - and
+  only while a game is being started, so it can never swallow a move.
+- **`farcade doctor`.** Checks the four things a seat needs at once: something
+  listening on the shared-instance port, an instance config it can actually find,
+  a derivable RPC key, and a chess engine on PATH. Exit 1 with numbered fixes. It
+  deliberately does not name which implementation owns the socket, because from
+  outside prnsd and rnsd are indistinguishable and a doctor that guesses is worse
+  than one that reports only what it checked.
+
+- **CI.** GitHub Actions runs `scripts/gate.sh`, the same gate as the bench,
+  on push and pull request, against Python 3.10 and 3.13 with a real chess
+  engine installed.
+- **A new game button** in the web UI: a rematch against the same opponent, so
+  nobody retypes a 32-character address to play again.
+- **"Your move" in the browser title**, because at correspondence pace the tab
+  is usually in the background.
+- **Companion games reach the instrument.** `events.csv` gains
+  `COMPANION_MOVE` rows in both directions, correlated from the host's
+  own events, so a companion soak is no longer invisible to the CSV.
+- **`scripts/companion_host.py`.** The live entry point P9 never got: a
+  companion node attached to prnsd (refuses to run standalone), with
+  instrumented CSV, status heartbeat, and periodic announces. Stock
+  Sideband on a phone can now actually reach companion mode; the live
+  Pixel acceptance is the remaining step.
+
+### Changed
+- **`bot_factory` takes a difficulty level explicitly** rather than having one
+  sniffed for it, and its callers move with it. **Breaking**, and the reason the
+  next release is a minor.
+- **The default opponent is medium, not the ceiling.** `default_bot` never passed
+  `skill_level`, so the chess bot was Stockfish at its default setting, far above
+  any human. Think time drops with skill too, because a weak opponent that stalls
+  feels broken rather than easy.
+- **The transport finds the running shared instance itself** - `FARCADE_RNS_CONFIG`,
+  then Reticulum's default `~/.reticulum` - derives the RPC key and seeds its own
+  client config before RNS reads it. `--rpc-key` still works and
+  `--instance-config` still points at a daemon living elsewhere, but neither is
+  required. A test pins our key derivation against the installed RNS, since
+  `full_hash(transport_identity.get_private_key())` was always Reticulum's own
+  scheme rather than a prnsd convention - which is why the same code attaches to
+  rnsd.
+- **Attach logic is shared between the hub and the single seat** rather than
+  duplicated. Finding the daemon is the same question for one player or twelve.
+
 ### Fixed
+- **Every browser on a seat was the same identity.** The API held a single `Node`
+  from construction, which is right for a personal seat and is the exact bug a hub
+  exists to fix: a result belonged to the machine rather than to whoever played
+  it. Routes now look the player up from the session token the browser carries.
+- **`farcade doctor` no longer prints ok for an `--instance-config` it never
+  found.** The first cut said ok for any path the caller passed - a green that
+  examined nothing, which is the bug class this project keeps meeting. It claims
+  ok only for a directory seen on disk, and a test holds it there.
+- **The error for becoming the instance owner says so.** Attaching to stock RNS
+  was never the failure; becoming the OWNER is - a private stack that talks to
+  nobody and measures nothing while looking like it works.
+
 - **A restart no longer abandons the game in progress.** `resume_all()` was
   built, tested, and then called by nothing that ships: every entry point
   created a peer, wrote its games faithfully, and started empty. `Node` now
@@ -28,23 +115,6 @@ time. Dates are the dates the work landed.
   seam every source funnels through, measured in bytes against a ceiling
   derived from `BUDGET` and the codec's own framing, and the voice path
   catches what it can still throw.
-
-### Added
-- **CI.** GitHub Actions runs `scripts/gate.sh` — the same gate as the bench —
-  on push and pull request, against Python 3.10 and 3.13 with a real chess
-  engine installed.
-- **A new game button** in the web UI: a rematch against the same opponent, so
-  nobody retypes a 32-character address to play again.
-- **"Your move" in the browser title**, because at correspondence pace the tab
-  is usually in the background.
-- **Companion games reach the instrument.** `events.csv` gains
-  `COMPANION_MOVE` rows in both directions, correlated from the host's
-  own events, so a companion soak is no longer invisible to the CSV.
-- **`scripts/companion_host.py`.** The live entry point P9 never got: a
-  companion node attached to prnsd (refuses to run standalone), with
-  instrumented CSV, status heartbeat, and periodic announces. Stock
-  Sideband on a phone can now actually reach companion mode; the live
-  Pixel acceptance is the remaining step.
 
 ## [0.3.0] - 2026-08-12
 

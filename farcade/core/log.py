@@ -6,7 +6,7 @@ One mechanism, four problems.
 
 Format: JSON lines. Line 0 is a header; every later line is one move.
 JSONL because a half-written trailing line (crash mid-append) must corrupt
-at most itself — the reader treats a torn final line as absent, which is
+at most itself. The reader treats a torn final line as absent, which is
 exactly the semantics an interrupted append should have.
 """
 

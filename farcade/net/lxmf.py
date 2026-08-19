@@ -55,7 +55,7 @@ def default_instance_config() -> Path | None:
 
     Precedence: an explicit ``FARCADE_RNS_CONFIG``, then Reticulum's default
     ``~/.reticulum``. Returns None when neither holds a transport identity,
-    meaning no daemon has ever run there — the caller should say so plainly
+    meaning no daemon has ever run there, so the caller should say so plainly
     instead of guessing further.
 
     Deliberately does not try to identify *which* implementation is running.

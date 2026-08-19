@@ -123,7 +123,7 @@ class Session:
         """The send path: our own player chose a move.
 
         Returns (ply, encoded_move, state_hash) for the MOVE message.
-        Raises IllegalMove if our own player misbehaves — a bug worth
+        Raises IllegalMove if our own player misbehaves, a bug worth
         crashing on locally, never worth sending.
         """
         if self.outcome() is not None:
@@ -143,7 +143,7 @@ class Session:
 
         A shorter or equal log is never adopted (we know at least as much
         as the peer). A log that fails replay or lands on the wrong hash
-        raises SessionBroken — loudly, by design.
+        raises SessionBroken, loudly and by design.
         """
         if len(moves) <= self.log.plies:
             return

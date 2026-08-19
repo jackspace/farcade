@@ -8,7 +8,7 @@ One protocol, two encodings:
 
 Both codecs are total inverses over every message type (tested), and
 every encoded message obeys the 200-byte budget or declares chunking
-(SYNC_STATE parts) — tests/test_budget.py fails loudly otherwise.
+(SYNC_STATE parts). tests/test_budget.py fails loudly otherwise.
 
 Header, binary: 1 byte (version<<4 | type), 8 bytes gid, 2 bytes ply BE.
 Header, text:   "FARCADE1 <gid-hex> <TYPE> <ply> ..."
@@ -193,7 +193,7 @@ def decode_binary(data: bytes) -> Msg:
 
 
 # ---------------------------------------------------------------------------
-# text codec — one line, sloppily parseable
+# text codec: one line, sloppily parseable
 # ---------------------------------------------------------------------------
 
 _MAGIC = "FARCADE1"
@@ -275,7 +275,7 @@ def decode_text(line: str) -> Msg:
 
 
 # ---------------------------------------------------------------------------
-# SYNC_STATE chunking — the one message that can outgrow the budget
+# SYNC_STATE chunking: the one message that can outgrow the budget
 # ---------------------------------------------------------------------------
 
 

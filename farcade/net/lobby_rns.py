@@ -1,6 +1,6 @@
 """13.7: publish and hear lobby cards as Reticulum announces.
 
-The card itself — format, signing, verification, freshness — belongs to
+The card itself (format, signing, verification, freshness) belongs to
 :mod:`farcade.proto.lobby` and stays there. This module is only the
 transport binding, which is the piece 13.7 was missing:
 
@@ -44,7 +44,7 @@ def identity_from_public_key(public_key: bytes) -> RNS.Identity | None:
     """Rebuild an Identity from the 64 public bytes a card carries.
 
     ``load_public_key`` returns ``None`` on success, so its return value
-    cannot be used as a success test — a truthiness check there rejects
+    cannot be used as a success test: a truthiness check there rejects
     every legitimate key while still looking like it works. Ask the
     object instead.
     """
