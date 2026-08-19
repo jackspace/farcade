@@ -4,7 +4,7 @@ Companion traffic is UTF-8 text, which decode_binary rejects, so before
 this the CSV was blind to an entire mode: a soak could run companion
 games all night and the events file would swear nothing happened. The
 rows come from the companion_move events the host emits while handling
-a delivery — same synchronous-visibility trick the MOVE verdicts use —
+a delivery, the same synchronous-visibility trick the MOVE verdicts use,
 so the wire tap still never imports the companion layer.
 """
 

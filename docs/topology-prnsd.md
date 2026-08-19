@@ -1,7 +1,7 @@
-# P4.2 — the prnsd topology, settled
+# P4.2: the prnsd topology, settled
 
-Decided and proven 2026-08-09 on the Windows host (Windows 11). This answers the sprint-1 open question
-"which prnsd instance, and the 37428 contention question."
+Decided and proven 2026-08-09 on the Windows host (Windows 11). This answers the open question of
+which prnsd instance to use, and the 37428 contention that came with it.
 
 ## The decision
 
@@ -36,7 +36,7 @@ Two independent guards, both proven to go red:
 Why "client" is enough to mean "via prnsd": Python RNS brings up configured interfaces only
 when it is the shared-instance owner or standalone (`Reticulum.py`, the
 `if self.is_shared_instance or self.is_standalone_instance` branch around line 718 in
-rns 1.4.2). A client's only pipe is the local socket to the instance owner — there is no
+rns 1.4.2). A client's only pipe is the local socket to the instance owner, and there is no
 second path the traffic could have taken. To pin the owner to prnsd specifically, check the
 port at the OS level (PowerShell):
 
@@ -69,7 +69,7 @@ passes because none of them ever looked at who was on the other end of the socke
     python scripts/probe_instance_owner.py              # exit 0 only if prnsd owns the bus
     sudo python scripts/probe_instance_owner.py         # Linux: needs to read the owner's /proc/<pid>/fd
 
-Exit codes are deliberate: `0` match, `1` mismatch, **`2` could-not-determine — never 0.** A check
+Exit codes are deliberate: `0` match, `1` mismatch, **`2` could-not-determine, never 0.** A check
 that cannot see must not report success.
 
 Proven to go red on real hosts rather than fixtures, 2026-08-14:
@@ -111,7 +111,7 @@ prnsd's defaults enable USB Auto and Bluetooth Auto. On first start they came up
 Auto connected to something within seconds. On a bench with live experiments that is not a
 default, it is a hazard: USB Auto opens COM ports (opening an ESP32-S3's port resets the
 board) and Bluetooth Auto dials Hopspot boards (a BLE connection changes a board's power
-draw — fatal to a battery runtime measurement). **Disable the radios before first `run`,**
+draw, which is fatal to a battery runtime measurement). **Disable the radios before first `run`,**
 or run first in a sandboxed config dir as done here:
 
     prnsd.exe interfaces disable 'USB Auto' --config <dir>
@@ -121,18 +121,18 @@ or run first in a sandboxed config dir as done here:
 
 For the two-host soak (P6.4, the Windows host ↔ Pi) the Pi side uses the
 `prnsd-0.3.3-aarch64-unknown-linux-gnu.tar.gz` release asset the same way, and the two
-prnsd instances will need one real interface towards each other (TCP or LoRa) — that
+prnsd instances will need one real interface towards each other (TCP or LoRa), and that
 interface gets enabled *on the prnsd side*, never on the peers.
 
 ## Known warts
 
-- **`digest sent was rejected` — root-caused and fixed 2026-08-09.** Python RNS
+- **`digest sent was rejected`, root-caused and fixed 2026-08-09.** Python RNS
   authenticates shared-instance RPC with `full_hash(transport identity private key)`
   (`Reticulum.py` ~line 356), which assumes every process shares one configdir. prnsd's key
   is the same construction over ITS identity: `sha256` of the raw bytes of
   `<prnsd-config>/storage/transport_identity` (see
   `prns-interfaces/.../rns_rpc/tests/persistence.rs`). A client with its own configdir can
-  never match by derivation — but both sides honour an explicit key, so compute
+  never match by derivation, but both sides honour an explicit key, so compute
   `sha256(transport_identity bytes)` and set it in each peer's RNS config:
 
       [reticulum]
@@ -140,10 +140,10 @@ interface gets enabled *on the prnsd side*, never on the peers.
 
   Verified live: a paced exchange without the key logged dozens of digest errors; the same
   exchange with it logged **zero**, and link-stats/first-hop-timeout RPCs work. Latency was
-  unchanged (median 4.01 s both arms), so the errors were cosmetic — but 24 h of clean logs
+  unchanged (median 4.01 s both arms), so the errors were cosmetic, but 24 h of clean logs
   and working stats beat 24 h of noise. Note this is interesting for *any* RNS app with its
   own configdir attaching to prnsd (Sideband on a desktop, say): same mismatch, same fix.
-- On Windows prnsd logs `shared_instance_unix_fallback fallback="tcp"` — expected; there is
+- On Windows prnsd logs `shared_instance_unix_fallback fallback="tcp"`, which is expected; there is
   no unix socket on Windows, TCP 37428 is the intended shape (same as Python RNS).
 - `GamePeer` assumes its storage directory exists (test fixtures create it). The runner
   scripts mkdir it; a future tidy could move that into `GamePeer`.

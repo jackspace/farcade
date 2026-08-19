@@ -1,4 +1,4 @@
-# Runbook: the 9.4 live acceptance — chess from a stock phone
+# Runbook: the 9.4 live acceptance: chess from a stock phone
 
 Written 2026-08-16. A full game from stock Sideband on the Pixel XL against the bot on
 the Windows host, over prnsd. Written so someone who has never touched this stack can run it.
@@ -65,7 +65,7 @@ for a MATCH, and re-attaches the responder. Give it a minute, then verify all th
 ```powershell
 # The new listener is up:
 Get-NetTCPConnection -LocalPort 4242 -State Listen
-# The Pi link came back (note the NEW pid — the old one died with the restart):
+# The Pi link came back (note the NEW pid; the old one died with the restart):
 Get-NetTCPConnection -RemotePort 4243 -State Established
 # The wrapper's own log ends in "owner MATCH - starting responder":
 Get-Content .local\responder-service.log -Tail 3
@@ -74,7 +74,7 @@ Get-Content .local\responder-service.log -Tail 3
 **Stamp the flap on the ops log**: the time prnsd went down and the time the
 4243 session re-established. If 4243 does not come back within ~2 minutes, restore the
 backup config (`Copy-Item .local\prnsd-config\config.pre-couch-tcp .local\prnsd-config\config -Force`),
-repeat 2c–2e, and stop here — tell the measurement owner what happened.
+repeat 2c–2e, and stop here. Tell the measurement owner what happened.
 
 ## 3. Start the companion host (a second PowerShell window)
 
@@ -96,7 +96,7 @@ companion address: <32 hex characters>  attached=True
 ```
 
 `attached=True` is required. `attached=False` or a refusal means it could not join
-prnsd — stop and investigate; do not work around it. Copy the 32-character address
+prnsd. Stop and investigate; do not work around it. Copy the 32-character address
 (it is also saved in `.local\companion\address.txt`). Leave this window running for
 the entire game.
 
@@ -115,13 +115,13 @@ the entire game.
 
 1. In Sideband: start a **new conversation** and paste the 32-character companion
    address as the recipient. (If you wait for announces instead, the peer shows up as
-   `farcade-companion` — but pasting is immediate.)
-2. Send `help` — a help message comes back. That round-trip is the moment the whole
+   `farcade-companion`, but pasting is immediate.)
+2. Send `help`, and a help message comes back. That round-trip is the moment the whole
    path works.
 3. Send `play chess`. The board arrives as text.
 4. Make moves by typing them: `e4`, `Nf3`, sloppy input is fine. `board` reprints the
    position, `resign` gives up, `play reversi` starts a different game.
-5. Play to a decided outcome (win, loss, or draw — a resign counts).
+5. Play to a decided outcome (win, loss, or draw; a resign counts).
 
 ## 6. Capture the evidence
 
@@ -149,5 +149,5 @@ Start-ScheduledTask -TaskName Farcade-Responder
 ```
 
 Evidence files and screenshots then go into the repo as
-`docs/run-<date>-companion-pixel.md` plus the CSV, following the sprint-1 pattern:
+`docs/run-<date>-companion-pixel.md` plus the CSV, following the pattern the earlier runs set:
 every anomaly attributed, no exceptions.

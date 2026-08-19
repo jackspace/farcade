@@ -3,7 +3,7 @@
 Nim-21: start at 21, players alternately subtract 1..3, whoever takes the
 last token wins. Chosen because it is trivially legal-checkable, has a
 natural illegal-move space, finishes fast, and needs no library. The core
-tests use ONLY this — real games get their own suites, and the isolation
+tests use ONLY this. Real games get their own suites, and the isolation
 test proves the core never imports them.
 """
 

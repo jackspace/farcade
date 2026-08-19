@@ -39,7 +39,7 @@ def test_duplicate_is_silent_noop(nim, tmp_path):
 
 def test_duplicate_of_different_bytes_still_noop(nim, tmp_path):
     """A stale RETRANSMIT with different content must not be re-checked
-    against rules — the ply is settled, full stop."""
+    against rules. The ply is settled, full stop."""
     s = started(nim, tmp_path)
     r = s.apply_wire_move(1, b"\xff", None)  # garbage bytes at settled ply
     assert r.verdict is Apply.DUPLICATE

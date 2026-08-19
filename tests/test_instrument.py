@@ -1,5 +1,5 @@
-"""P6.1 event CSV. A row per message both ways, and — the part that
-makes it an instrument rather than a decoration — the dup/gap/hash_ok
+"""P6.1 event CSV. A row per message both ways, and (the part that
+makes it an instrument rather than a decoration) the dup/gap/hash_ok
 columns are PROVEN to go red on injected faults. A CSV that shows all
 zeros because nothing fed it verdicts would pass a lazier test."""
 

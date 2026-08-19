@@ -1,11 +1,11 @@
 """P3.7: the adversarial harness.
 
 1000 connect-four games and 20 chess games over a channel that drops,
-duplicates, reorders and truncates 10% of everything — zero desyncs and
+duplicates, reorders and truncates 10% of everything, with zero desyncs and
 zero corrupt logs allowed.
 
 And the part that keeps the harness honest: a NAIVE peer (no ply
-sequencing — it applies whatever arrives, in arrival order) must be
+sequencing, since it applies whatever arrives in arrival order) must be
 BROKEN by the same channel. If the harness cannot break the naive
 implementation, the harness is theatre, not evidence.
 """
@@ -98,7 +98,7 @@ class NaivePeer(GamePeer):
             move = entry.session.game.decode_move(msg.move)
             new_state = entry.session.game.apply(entry.session.state, move)
         except Exception:
-            return  # shrug — also naive
+            return  # shrug, also naive
         entry.session.log.append(msg.move)
         entry.session.state = new_state
         self._check_finished(entry)
@@ -114,7 +114,7 @@ def test_harness_breaks_the_naive_peer():
         if status != "ok":
             failures += 1
     assert failures > 0, (
-        "adversarial harness failed to break a peer with NO sequencing — "
+        "adversarial harness failed to break a peer with NO sequencing: "
         "the harness itself is broken"
     )
 

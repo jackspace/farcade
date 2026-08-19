@@ -1,7 +1,7 @@
 """The local API drives everything: one server, every front-end.
 
 Two Nodes on a loopback hub, one wrapped in the HTTP API. The test
-client is httpx — exactly what the TUI uses, so this suite IS the TUI's
+client is httpx, exactly what the TUI uses, so this suite IS the TUI's
 transport path; the web page rides the same routes from JS.
 """
 

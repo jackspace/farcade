@@ -49,7 +49,7 @@ prnsd run --config ./prnsd-config
 ```
 
 Startup log must show `shared_instance_started bus_port=37428`. **prnsd starts before any
-peer, always** — a peer that starts first becomes the instance owner itself, and Farcade's
+peer, always**: a peer that starts first becomes the instance owner itself, and Farcade's
 transport refuses to run that way (`NotAttachedToSharedInstance`).
 
 ## 3. Give peers the RPC key (recommended)
@@ -69,16 +69,16 @@ python3 -c "import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read(
 Without it everything still works, but the peer logs `digest sent was rejected` on every
 stats RPC. With it: zero (verified live, both arms).
 
-## 4. Two peers, one box — the smoke test
+## 4. Two peers, one box: the smoke test
 
-Terminal 1 (responder — accepts invites, plays random moves instantly):
+Terminal 1 (responder, accepts invites, plays random moves instantly):
 
 ```bash
 python scripts/soak_responder.py ./run-b
 # prints: responder address: <32 hex>   attached=True
 ```
 
-Terminal 2 (initiator — paced games against that address):
+Terminal 2 (initiator, paced games against that address):
 
 ```bash
 python scripts/soak_initiator.py ./run-a <responder-address> --hours 0.05 --interval 2
@@ -91,7 +91,7 @@ Three minutes later the initiator prints a metrics report. Healthy looks like:
 
 ## 5. Second box, via prnsd
 
-On the remote host, run the responder on a **standalone** RNS with a TCP server — its config
+On the remote host, run the responder on a **standalone** RNS with a TCP server. Its config
 (`run-b/rnsconfig/config`, create before first start):
 
 ```ini
@@ -108,7 +108,7 @@ On the remote host, run the responder on a **standalone** RNS with a TCP server 
     listen_port = 4243
 ```
 
-(Standalone is the polite shape when the host already has its own Reticulum stack — nothing
+(Standalone is the polite shape when the host already has its own Reticulum stack, because nothing
 is shared, nothing is fought over. The responder passes `require_attached=False` for exactly
 this case.)
 
@@ -130,7 +130,7 @@ announce predates the link.
 python -m farcade.metrics <workdir>/events.csv
 ```
 
-- `duplicates` / `gaps` are the channel misbehaving — the protocol absorbs both (that is
+- `duplicates` / `gaps` are the channel misbehaving, and the protocol absorbs both (that is
   what the harness proves), so nonzero values are *measurements*, not failures.
 - `desyncs` nonzero is a real failure. File a bug with both sides' `events.csv`.
 - `longest_silence_s` across a multi-hour run is the number that tells you whether the link

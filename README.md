@@ -27,7 +27,6 @@ Games, players, voices and transports are all plugins behind narrow ports; the s
 knows none of them.
 
 - **Spec**: [docs/spec.md](docs/spec.md)
-- **Plans and work breakdowns**: [docs/sprint-1.md](docs/sprint-1.md), [docs/sprints-2-4.md](docs/sprints-2-4.md)
 - **Deploying two peers over Reticulum/prnsd**: [docs/deploy-two-peers.md](docs/deploy-two-peers.md)
 - **Why prnsd owns port 37428, with evidence**: [docs/topology-prnsd.md](docs/topology-prnsd.md)
 

@@ -1,6 +1,6 @@
 """The port is real: ONE generic driver runs every game through a full
-Session lifecycle — random play, persistence, crash-resume, duplicate
-storm, log adoption — knowing nothing about any of them.
+Session lifecycle: random play, persistence, crash-resume, duplicate
+storm, log adoption, knowing nothing about any of them.
 
 If a game plugin can only pass its own bespoke tests, the abstraction is
 a guess. This file is where the guess gets audited.

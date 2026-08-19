@@ -1,4 +1,4 @@
-# 2026-08-14 — first run where "attached as client" is backed by "client of prnsd"
+# 2026-08-14: first run where "attached as client" is backed by "client of prnsd"
 
 Three paced runs on the Windows host, two peers on one box, through prnsd 0.3.3. Everything below was
 measured this session. The interesting parts are a fixed hypothesis, a killed hypothesis, and a
@@ -13,7 +13,7 @@ Farcade's transport refuses stock RNS. It had two guards for that:
 
 **Both ask the same question, and it is the wrong one.** Neither asks *a client of what*. On
 Windows the gap never showed, because prnsd was the only thing that would ever hold TCP 37428. On
-Linux it is wide open — measured on a third Linux box the same day:
+Linux it is wide open, measured on a third Linux box the same day:
 
     rnsd  pid 906094  unix @rns/default (LISTEN)      <- rnsd owns the bus
     meshchat                                           <- attached as its client
@@ -65,7 +65,7 @@ every stats RPC. Confirmed: runs 1 and 2 are full of them, run 3 has **none**.
 
 **And it changed latency not at all.** I had guessed those rejected RPCs were costing a timeout per
 message. Median 4.011 s in all three runs, min 3.808-3.810. That is not a transport cost, it is a
-fixed cadence — and 4.0 s is exactly 2x the `--interval 2`. **Latency here is pacing, not the link.**
+fixed cadence, and 4.0 s is exactly 2x the `--interval 2`. **Latency here is pacing, not the link.**
 
 ### A retraction that belongs in the record
 

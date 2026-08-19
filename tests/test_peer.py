@@ -1,4 +1,4 @@
-"""GamePeer: the state machine over a CLEAN channel — every documented
+"""GamePeer: the state machine over a CLEAN channel, every documented
 behaviour, one test each. Chaos comes later (test_adversarial)."""
 
 import pytest
@@ -59,7 +59,7 @@ def test_forged_out_of_turn_move_is_rejected(tmp_path):
     ch, pa, pb, ea, eb = make_pair(tmp_path)
     gid = pa.invite(B, "c4", our_seat="first")
     ch.pump()
-    # Bob forges a MOVE for ply 0, which is Alice's turn — injected
+    # Bob forges a MOVE for ply 0, which is Alice's turn, injected
     # directly into the channel, bypassing Bob's own turn check.
     forged = Msg(MsgType.MOVE, gid, 0, move=b"\x03", state_hash=b"")
     ch.submit(B, A, encode_binary(forged))

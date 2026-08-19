@@ -9,7 +9,7 @@ dist/
 .ruff_cache/
 .hypothesis/
 
-# runtime state — never commit identities or game state
+# runtime state: never commit identities or game state
 .reticulum/
 *.identity
 state/

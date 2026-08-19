@@ -7,8 +7,8 @@ them (tests/test_isolation.py enforces that).
 
 The port deliberately covers two-player, perfect-information, alternating
 games and nothing more. Shared randomness, hidden information and
-simultaneous moves are protocol extensions with their own designs (see
-docs/sprint-1.md tier 4); pretending this interface supports them would be a
+simultaneous moves are protocol extensions with their own designs, on the
+roadmap rather than here; pretending this interface supports them would be a
 lie that only surfaces months later.
 """
 

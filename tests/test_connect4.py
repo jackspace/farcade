@@ -65,7 +65,7 @@ def test_draw_branch_exactly():
     """A constructed full grid with no four-in-a-row is a DRAW.
 
     cell(c, r) = ((c // 2) + r) % 2 gives max runs of 2 horizontally,
-    1 vertically, and 2 diagonally — verified by the win detector itself
+    1 vertically, and 2 diagonally, verified by the win detector itself
     (if it found a run of 4 this would report a winner, failing the test).
     """
     from farcade.games.connect4 import COLS, ROWS, C4State
